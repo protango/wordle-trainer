@@ -1,5 +1,6 @@
 import rawValidWords from '../data/validWords.json';
 import rawAnswerWords from '../data/answerWords.json';
+import { counts, letterCounts } from './utilities';
 
 const validWords = new Set(rawValidWords);
 const answerWords = new Set(rawAnswerWords);
@@ -23,11 +24,10 @@ interface LetterResult {letter: string, position: number, status: LetterStatus}
 
 class GuessResult {
     public guess: string;
-    public solution: string;
 
     public result: LetterResult[];
-    public correctCount = 0;
-    public wrongPositionCount = 0;
+    public correctCount: number;
+    public wrongPositionCount: number;
     public correctLetterCounts(): Record<string, number> {
         return this.result.reduce((acc, {letter, status}) => {
             if (status === LetterStatus.Correct || status === LetterStatus.WrongPosition) {
@@ -50,41 +50,60 @@ class GuessResult {
         }).join('') + ' ' + this.guess.toUpperCase();
     }
 
-    constructor(guess: string, solution: string) {
+    constructor(guess: string, result: LetterStatus[])
+    constructor(guess: string, arg2: string | LetterStatus[]) {
+        if (!allWords.has(guess)) {
+            throw new Error('Guess must be a valid word');
+        }
         this.guess = guess;
-        this.solution = solution;
+        if (guess.length !== arg2.length) {
+            throw new Error('Length of guess and result must be the same');
+        }
+
+        if (typeof arg2 === 'string') {
+            this.result = GuessResult.resultsFromSolution(guess, arg2);
+        } else if (typeof arg2 === 'object') {
+            this.result = arg2.map((x, i) => ({letter: guess[i], position: i, status: x}));
+        } else {
+            throw new TypeError('Argument 2 must be a string or an array of LetterStatus');
+        }
+
+        this.correctCount = this.result.filter(x => x.status === LetterStatus.Correct).length;
+        this.wrongPositionCount = this.result.filter(x => x.status === LetterStatus.WrongPosition).length;
+    }
+
+    public static resultsFromSolution(guess: string, solution: string): LetterResult[] {
         if (guess.length !== solution.length) {
             throw new Error('Guess and solution must be the same length');
         }
-        const solutionLetters = [...solution] as (string | undefined)[];
+        const solutionLetterCounts = letterCounts(solution);
+        
         const result = [...guess].map((x, i) => ({
             letter: x,
             position: i,
             status: undefined as LetterStatus | undefined
         }));
         for (let i = 0; i < guess.length; i++) {
-            if (guess[i] === solution[i]) {
-                this.correctCount++;
+            const guessLetter = guess[i], solutionLetter = solution[i];
+            if (guessLetter === solutionLetter) {
                 result[i].status = LetterStatus.Correct;
-                solutionLetters[i] = undefined;
+                solutionLetterCounts[solutionLetter] -= 1;
             }
         }
         for (let i = 0; i < guess.length; i++) {
-            if (result[i].status !== undefined) {
+            if (result[i].status !== undefined)
                 continue;
-            }
-            const index = solutionLetters.indexOf(guess[i]);
-            if (index !== -1) {
+            const guessLetter = guess[i]
+            const count = solutionLetterCounts[guessLetter];
+            if (count) {
                 result[i].status = LetterStatus.WrongPosition;
-                solutionLetters[index] = undefined;
-                this.wrongPositionCount++;
+                solutionLetterCounts[guessLetter] -= 1;
             } else {
                 result[i].status = LetterStatus.NotPresent;
             }
         }
 
-        this.result = result as LetterResult[];
-
+        return result as LetterResult[];
     }
 }
 
@@ -94,30 +113,27 @@ enum CountSpecificity {
 }
 
 class Game {
-    public solution: string;
     public guesses: GuessResult[] = [];
     public solved = false;
     private positions: {answer?: string, cantBe: string[]}[];
     public answerMustContain = new Map<string, { count: number, specificity: CountSpecificity }>();
-    constructor(solution: string) {
-        this.solution = solution;
-        this.positions = [...Array(solution.length)].map(x => ({
+
+    private possibleSolutions: Set<string> = new Set(answerWords);
+    private possibleGuesses: Set<string> = new Set(allWords);
+
+    constructor(length: number) {
+        this.positions = [...Array(length)].map(x => ({
             cantBe: []
         }));
     }
 
-    public guess(guess: string): GuessResult {
-        if (!allWords.has(guess)) {
-            throw new Error('Guess must be a valid word');
-        }
+    public guess(guess: GuessResult): void {
         if (this.solved) {
             throw new Error('Game already solved');
         }
-        const gr = new GuessResult(guess, this.solution);
-        this.guesses.push(gr);
-        this.updateLetterPossibilities(gr);
-        this.solved = guess === this.solution;
-        return gr;
+        this.guesses.push(guess);
+        this.updateLetterPossibilities(guess);
+        this.solved = guess.result.every(x => x.status === LetterStatus.Correct);
     }
 
     private updateLetterPossibilities(guess: GuessResult): void {
@@ -155,10 +171,16 @@ class Game {
         }
     }
 
-    private generateRegex(discoveryMode = false): RegExp {
+    private overlapping(a: string, b: string): number {
+        const aLetterCounts = letterCounts(a);
+        const bLetterCounts = letterCounts(b);
+
+
+    }
+
+    private generateRegex(): RegExp {
         let result = "^";
         const bannedLetters = [] as string[];
-        const lookingForLetters: string[] = [];
         for (const mustContainRecord of this.answerMustContain) {
             const letter = mustContainRecord[0];
             const countInfo = mustContainRecord[1];
@@ -166,13 +188,8 @@ class Game {
                 bannedLetters.push(letter);
             } else {
                 let {count, specificity} = countInfo;
-                if (discoveryMode) {
-                    const solvedCount = this.positions.filter(x => x.answer === letter).length;
-                    count -= solvedCount;
-                }
                 if (count > 0) {
                     result += `(?=${('.*' + letter).repeat(count)}${specificity === CountSpecificity.Exactly ? `[^${letter}]*$` : ''})`;
-                    lookingForLetters.push(letter);
                 } else {
                     bannedLetters.push(letter);
                 }
@@ -180,11 +197,10 @@ class Game {
         }
         const bannedLettersString = bannedLetters.join('');
         for (const pos of this.positions) {
-            if (pos.answer && !discoveryMode) {
+            if (pos.answer) {
                 result += pos.answer;
-            } else if (pos.cantBe.length || bannedLettersString || (pos.answer && discoveryMode)) {
-                result += `[^${pos.cantBe.join('') + bannedLettersString}` + 
-                    `${discoveryMode && pos.answer ? pos.answer + lookingForLetters.join('') : ''}]`;
+            } else if (pos.cantBe.length || bannedLettersString) {
+                result += `[^${pos.cantBe.join('') + bannedLettersString}]`;
             } else {
                 result += '.';
             }
@@ -194,41 +210,29 @@ class Game {
         return new RegExp(result);
     }
 
-    private internalBestGuess(discoveryMode = false, useOnlyAnswerWords = false): string | undefined {
-        const regex = this.generateRegex(discoveryMode);
+    private bestGuess(useOnlyAnswerWords = false): string | undefined {
+        const regex = this.generateRegex();
         let guessCount = 0;
         let bestGuess: {word: string, score: number} | undefined;
-        for (const guess of discoveryMode && !useOnlyAnswerWords ? allWords : answerWords) {
+        for (const guess of !useOnlyAnswerWords ? allWords : answerWords) {
             if (regex.test(guess)) {
                 guessCount++;
-                const score = this.getWordScore(guess, discoveryMode);
+                const score = this.getWordScore(guess);
                 if (!bestGuess || score > bestGuess.score) {
                     bestGuess = {word: guess, score};
                 }
             }
         }
 
-        if (!discoveryMode) {
-            if (guessCount <= 5) {
-                return bestGuess?.word;
-            } else {
-                return this.internalBestGuess(true, useOnlyAnswerWords) ?? bestGuess?.word;
-            }
-        }
-
         return bestGuess?.word;
     }
 
-    public bestGuess(useOnlyAnswerWords = false) {
-        return this.internalBestGuess(false, useOnlyAnswerWords);
-    }
-
-    private getWordScore(word: string, discoveryMode = false): number {
+    private getWordScore(word: string): number {
         if (!allWords.has(word)) {
             return 0;
         }
         let score = 0;
-        const letters = discoveryMode ? new Set(word) : [...word]; // Don't award points for double letters
+        const letters = [...word];
         letters.forEach(letter => {
             score += letterProbabilities[letter];
         });
