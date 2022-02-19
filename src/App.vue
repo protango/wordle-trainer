@@ -10,9 +10,7 @@
     </div>
   </header>
   <main>
-    <div class="playArea">
-      <Game></Game>
-    </div>
+    <Game></Game>
   </main>
   <footer>
     <span
@@ -113,20 +111,11 @@ body {
   font-family: "Roboto", sans-serif;
 }
 
-.playArea {
-  max-width: 500px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  margin-top: 5px;
-}
-
 :root {
   --bgClr: #fff;
   --keyClr: #d3d6da;
   --correctClr: #6aaa64;
-  --presnentClr: #f5793a;
+  --presentClr: #c9b458;
   --absentClr: #787c7e;
   --blackClr: #000;
   --whiteClr: #fff;

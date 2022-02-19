@@ -35,3 +35,7 @@ export function randomItemFromSet<T>(set: Set<T>): T {
 
   return iterator.next().value;
 }
+
+export function sleep(time: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, time));
+}

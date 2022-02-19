@@ -12,7 +12,7 @@ export class Game extends Solver {
   }
 
   public guess(guess: string): LetterResult[] {
-    const gr = new GuessResult(guess, this.solution);
+    const gr = new GuessResult(guess.toLowerCase(), this.solution);
     this.addGuess(gr);
     return gr.result;
   }
