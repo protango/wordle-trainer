@@ -9,7 +9,11 @@
       <fa icon="gear" class="headerBtn" />
     </div>
   </header>
-  <main></main>
+  <main>
+    <div class="playArea">
+      <Keyboard></Keyboard>
+    </div>
+  </main>
   <footer>
     <span
       >Built with <i class="heart">❤</i> by
@@ -19,24 +23,11 @@
   </footer>
 </template>
 
-<script lang="ts">
-import { Options, Vue } from "vue-class-component";
-import HelloWorld from "./components/HelloWorld.vue";
-
-@Options({
-  components: {
-    HelloWorld,
-  },
-})
-export default class App extends Vue {}
+<script setup lang="ts">
+import Keyboard from "./components/Keyboard.vue";
 </script>
 
 <style>
-@font-face {
-  font-family: suez-one;
-  src: url("./assets/SuezOne-Regular.ttf");
-}
-
 header {
   height: 50px;
   display: flex;
@@ -55,7 +46,7 @@ header {
 }
 
 .logo {
-  font-family: suez-one;
+  font-family: "Suez One", serif;
   font-size: 28px;
   margin: 0;
   text-align: center;
@@ -101,6 +92,19 @@ main {
 
 body {
   margin: 0;
-  font-family: sans-serif;
+  font-family: "Roboto", sans-serif;
+}
+
+.playArea {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+:root {
+  --bgClr: #fff;
+  --keyClr: #d3d6da;
+  --correctClr: #6aaa64;
+  --presnentClr: #f5793a;
+  --absentClr: #787c7e;
 }
 </style>

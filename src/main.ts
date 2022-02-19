@@ -4,11 +4,12 @@ import {
   faCircleQuestion,
   faSquarePollVertical,
   faGear,
+  faDeleteLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
 import App from "./App.vue";
 
-library.add(faCircleQuestion, faSquarePollVertical, faGear);
+library.add(faCircleQuestion, faSquarePollVertical, faGear, faDeleteLeft);
 
 createApp(App).component("fa", FontAwesomeIcon).mount("#app");
