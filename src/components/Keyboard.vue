@@ -2,27 +2,17 @@
   <div class="keyboard">
     <div class="row" v-for="(keyRow, y) in keys" :key="y">
       <div v-if="y === 1" class="kbSpacer"></div>
-      <button
-        @click="$emit('keyPress', 'ENTER')"
-        v-if="y === 2"
-        class="key big-key"
-      >
-        ENTER
-      </button>
+      <button @click="$emit('keyPress', 'ENTER')" v-if="y === 2" class="key big-key">ENTER</button>
       <button
         @click="$emit('keyPress', key)"
-        :class="[getColorClass(key)]"
+        :class="[props.keyStatus?.[key] ? LetterStatus[props.keyStatus[key]].toLowerCase() : '']"
         v-for="(key, x) in keyRow"
         :key="x"
         class="key"
       >
         {{ key }}
       </button>
-      <button
-        @click="$emit('keyPress', 'BACKSPACE')"
-        v-if="y === 2"
-        class="key big-key"
-      >
+      <button @click="$emit('keyPress', 'BACKSPACE')" v-if="y === 2" class="key big-key">
         <fa icon="delete-left" />
       </button>
       <div v-if="y === 1" class="kbSpacer"></div>
@@ -31,12 +21,10 @@
 </template>
 
 <script lang="ts" setup>
-import { LetterStatus } from "@/enums";
+import { LetterStatus } from "@/letterStatus";
 import { PropType } from "vue";
 
-const keys: string[][] = "QWERTYUIOP\nASDFGHJKL\nZXCVBNM"
-  .split("\n")
-  .map((row) => [...row]);
+const keys: string[][] = "QWERTYUIOP\nASDFGHJKL\nZXCVBNM".split("\n").map((row) => [...row]);
 
 const props = defineProps({
   keyStatus: Object as PropType<Record<string, LetterStatus>>,
@@ -45,19 +33,6 @@ const props = defineProps({
 defineEmits<{
   (e: "keyPress", key: string): void;
 }>();
-
-function getColorClass(key: string): string {
-  switch (props.keyStatus?.[key]) {
-    case LetterStatus.Correct:
-      return "correct";
-    case LetterStatus.Present:
-      return "present";
-    case LetterStatus.Absent:
-      return "absent";
-    default:
-      return "";
-  }
-}
 </script>
 
 <style scoped>

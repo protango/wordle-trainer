@@ -1,108 +1,61 @@
 <template>
-  <div class="keyboard">
-    <div class="row" v-for="(keyRow, y) in keys" :key="y">
-      <div v-if="y === 1" class="kbSpacer"></div>
-      <button
-        @click="$emit('keyPress', 'ENTER')"
-        v-if="y === 2"
-        class="key big-key"
-      >
-        ENTER
-      </button>
-      <button
-        @click="$emit('keyPress', key)"
-        :class="[getColorClass(key)]"
-        v-for="(key, x) in keyRow"
-        :key="x"
-        class="key"
-      >
-        {{ key }}
-      </button>
-      <button
-        @click="$emit('keyPress', 'BACKSPACE')"
-        v-if="y === 2"
-        class="key big-key"
-      >
-        <fa icon="delete-left" />
-      </button>
-      <div v-if="y === 1" class="kbSpacer"></div>
+  <div style="flex: 1; display: flex; align-items: center">
+    <div class="gameBoard" :style="{ 'aspect-ratio': numOfLetters + '/' + numOfGuesses }">
+      <div class="row" v-for="(row, guessIdx) in letterStates" :key="guessIdx">
+        <div
+          class="letterBox"
+          v-for="(letter, letterIdx) in row"
+          :class="[LetterStatus[letter.status].toLowerCase()]"
+          :key="letterIdx"
+        >
+          {{ letter.letter ?? "" }}
+        </div>
+      </div>
     </div>
   </div>
+
+  <Keyboard></Keyboard>
 </template>
 
 <script lang="ts" setup>
-import { LetterStatus } from "@/enums";
-import { PropType } from "vue";
+import { LetterStatus } from "@/letterStatus";
+import Keyboard from "./Keyboard.vue";
 
-const keys: string[][] = "QWERTYUIOP\nASDFGHJKL\nZXCVBNM"
-  .split("\n")
-  .map((row) => [...row]);
-
-const props = defineProps({
-  keyStatus: Object as PropType<Record<string, LetterStatus>>,
-});
-
-defineEmits<{
-  (e: "keyPress", key: string): void;
-}>();
-
-function getColorClass(key: string): string {
-  switch (props.keyStatus?.[key]) {
-    case LetterStatus.Correct:
-      return "correct";
-    case LetterStatus.Present:
-      return "present";
-    case LetterStatus.Absent:
-      return "absent";
-    default:
-      return "";
-  }
+interface LetterState {
+  letter?: string;
+  status: LetterStatus;
 }
+
+const numOfLetters = 5;
+const numOfGuesses = 6;
+
+const letterStates: LetterState[][] = Array.from(Array(numOfGuesses)).map(() => {
+  return Array.from(Array(numOfLetters)).map(() => ({
+    status: LetterStatus.Absent,
+  }));
+});
 </script>
 
 <style scoped>
-.keyboard {
-  margin: 0 3px;
+.gameBoard {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 auto;
+  height: 100%;
+  max-height: 400px;
+}
+.letterBox {
+  flex: 1;
+  box-sizing: border-box;
+  border: 2px solid var(--keyClr);
 }
 
 .row {
   display: flex;
-  flex-direction: row;
   justify-content: center;
-  margin: 8px 0;
-}
-
-.key {
-  background: var(--keyClr);
-  border: none;
-  height: 58px;
-  font-weight: 500;
-  font-family: "Roboto", sans-serif;
-  font-size: 14px;
-  border-radius: 4px;
-  cursor: pointer;
+  gap: 6px;
   flex: 1;
-  padding: 0;
-  margin: 0 3px;
-}
-
-.key.correct {
-  background: var(--correctClr);
-}
-
-.key.present {
-  background: var(--presentClr);
-}
-
-.key.absent {
-  background: var(--absentClr);
-}
-
-.kbSpacer {
-  flex: 0.5;
-}
-
-.key.big-key {
-  flex: 1.5;
 }
 </style>

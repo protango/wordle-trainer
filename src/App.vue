@@ -11,20 +11,20 @@
   </header>
   <main>
     <div class="playArea">
-      <Keyboard></Keyboard>
+      <Game></Game>
     </div>
   </main>
   <footer>
     <span
       >Built with <i class="heart">❤</i> by
-      <a href="https://github.com/protango">protango</a></span
+      <a href="https://github.com/protango">protango</a>. </span
     ><br />
-    <span>Not endorsed by, nor affiliated with the New York Times</span>
+    <span>Not endorsed by, nor affiliated with the New York Times. </span>
   </footer>
 </template>
 
 <script setup lang="ts">
-import Keyboard from "./components/Keyboard.vue";
+import Game from "./components/Game.vue";
 </script>
 
 <style>
@@ -80,6 +80,23 @@ footer {
   }
 }
 
+@media (max-height: 815px) {
+  footer br {
+    display: none;
+  }
+  footer {
+    font-size: 12px;
+    line-height: unset;
+    padding-bottom: 2px;
+  }
+}
+
+@media (max-height: 400px) {
+  footer {
+    display: none;
+  }
+}
+
 #app {
   display: flex;
   flex-direction: column;
@@ -88,6 +105,7 @@ footer {
 
 main {
   flex: 1 1 auto;
+  min-height: 0;
 }
 
 body {
@@ -98,6 +116,10 @@ body {
 .playArea {
   max-width: 500px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin-top: 5px;
 }
 
 :root {
