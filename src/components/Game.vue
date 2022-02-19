@@ -5,7 +5,7 @@
         <div
           class="letterBox"
           v-for="(letter, letterIdx) in row"
-          :class="[LetterStatus[letter.status].toLowerCase()]"
+          :class="[LetterStatus[letter.status].toLowerCase(), letter.letter ? 'filled' : '']"
           :key="letterIdx"
         >
           {{ letter.letter ?? "" }}
@@ -14,11 +14,12 @@
     </div>
   </div>
 
-  <Keyboard></Keyboard>
+  <Keyboard @key-press="handleKeyPress"></Keyboard>
 </template>
 
 <script lang="ts" setup>
 import { LetterStatus } from "@/letterStatus";
+import { onMounted, onUnmounted } from "vue";
 import Keyboard from "./Keyboard.vue";
 
 interface LetterState {
@@ -31,9 +32,23 @@ const numOfGuesses = 6;
 
 const letterStates: LetterState[][] = Array.from(Array(numOfGuesses)).map(() => {
   return Array.from(Array(numOfLetters)).map(() => ({
-    status: LetterStatus.Absent,
+    status: LetterStatus.Unset,
   }));
 });
+
+onMounted(() => {
+  document.addEventListener("keydown", handleNativeKeyDown);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("keydown", handleNativeKeyDown);
+});
+
+function handleNativeKeyDown(e: KeyboardEvent) {
+  handleKeyPress(e.key.toUpperCase());
+}
+
+function handleKeyPress(key: string) {}
 </script>
 
 <style scoped>
@@ -49,7 +64,25 @@ const letterStates: LetterState[][] = Array.from(Array(numOfGuesses)).map(() => 
 .letterBox {
   flex: 1;
   box-sizing: border-box;
+  color: var(--whiteClr);
+}
+.letterBox.unset {
   border: 2px solid var(--keyClr);
+  color: var(--blackClr);
+}
+
+.letterBox.correct {
+  background: var(--correctClr);
+}
+.letterBox.present {
+  background: var(--presentClr);
+}
+.letterBox.absent {
+  background: var(--absentClr);
+}
+
+.letterBox.filled.unset {
+  border-color: var(--absentClr);
 }
 
 .row {

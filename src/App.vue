@@ -128,5 +128,7 @@ body {
   --correctClr: #6aaa64;
   --presnentClr: #f5793a;
   --absentClr: #787c7e;
+  --blackClr: #000;
+  --whiteClr: #fff;
 }
 </style>
