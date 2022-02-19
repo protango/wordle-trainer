@@ -17,7 +17,7 @@
       >Built with <i class="heart">❤</i> by
       <a href="https://github.com/protango">protango</a>. </span
     ><br />
-    <span>Not endorsed by, nor affiliated with the New York Times. </span>
+    <span>Not affiliated with the New York Times. </span>
   </footer>
 </template>
 
@@ -98,7 +98,8 @@ footer {
 #app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
+  overflow: hidden;
 }
 
 main {
@@ -109,6 +110,12 @@ main {
 body {
   margin: 0;
   font-family: "Roboto", sans-serif;
+  height: 100%;
+  position: relative;
+}
+
+html {
+  height: 100%;
 }
 
 :root {

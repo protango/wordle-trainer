@@ -1,6 +1,6 @@
 <template>
   <div class="playArea">
-    <div style="flex: 1; display: flex; align-items: center">
+    <div style="flex: 1; display: flex; align-items: center; min-height: 0">
       <div class="gameBoard" :style="{ 'aspect-ratio': numOfLetters + '/' + numOfGuesses }">
         <div class="row" v-for="(row, guessIdx) in letterStates" :key="guessIdx">
           <div
@@ -193,6 +193,28 @@ async function loadGuessResult(guessResult: LetterResult[]): Promise<void> {
   }
   100% {
     transform: rotateX(0);
+  }
+}
+
+@media (max-height: 670px) {
+  .row {
+    gap: 4px;
+  }
+  .gameBoard {
+    gap: 4px;
+  }
+}
+
+@media (max-height: 400px) {
+  .letterBox {
+    font-size: 5px;
+    padding: 0;
+    background: var(--keyClr);
+    min-width: 5px;
+    min-height: 5px;
+  }
+  .letterBox.unset {
+    border: none;
   }
 }
 </style>

@@ -44,13 +44,13 @@ defineEmits<{
   display: flex;
   flex-direction: row;
   justify-content: center;
-  margin: 8px 0;
+  margin: 4px 0;
 }
 
 .key {
   background: var(--keyClr);
   border: none;
-  height: 58px;
+  height: 50px;
   font-weight: 500;
   font-family: "Roboto", sans-serif;
   font-size: 14px;
@@ -58,7 +58,9 @@ defineEmits<{
   cursor: pointer;
   flex: 1;
   padding: 0;
-  margin: 0 3px;
+  margin: 0 2px;
+  color: var(--blackClr);
+  touch-action: manipulation;
 }
 
 .key.correct {
