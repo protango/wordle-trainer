@@ -50,7 +50,7 @@ defineEmits<{
 .key {
   background: var(--keyClr);
   border: none;
-  height: 50px;
+  height: 54px;
   font-weight: 500;
   font-family: "Roboto", sans-serif;
   font-size: 14px;
