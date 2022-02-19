@@ -12,8 +12,15 @@ export class Game extends Solver {
   }
 
   public guess(guess: string): LetterResult[] {
+    if (!this.isValid(guess)) {
+      throw new Error("Not a valid word");
+    }
     const gr = new GuessResult(guess.toLowerCase(), this.solution);
     this.addGuess(gr);
     return gr.result;
+  }
+
+  public isValid(guess: string): boolean {
+    return Solver.allWords.has(guess.toLowerCase());
   }
 }

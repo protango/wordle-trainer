@@ -2,7 +2,12 @@
   <div class="playArea">
     <div style="flex: 1; display: flex; align-items: center; min-height: 0">
       <div class="gameBoard" :style="{ 'aspect-ratio': numOfLetters + '/' + numOfGuesses }">
-        <div class="row" v-for="(row, guessIdx) in letterStates" :key="guessIdx">
+        <div
+          class="row"
+          v-for="(row, guessIdx) in letterStates"
+          :key="guessIdx"
+          :class="[shakeRow && cursorPosition[0] === guessIdx ? 'shake' : '']"
+        >
           <div
             class="letterBox"
             v-for="(letter, letterIdx) in row"
@@ -49,6 +54,8 @@ const letterStates: Ref<LetterState[][]> = ref(
   })
 );
 
+let shakeRow = ref(false);
+
 let game = new Game();
 let isRevealing = false;
 
@@ -69,11 +76,7 @@ function handleKeyPress(key: string) {
     return;
   }
   if (key === "ENTER") {
-    if (cursorPosition[0] >= numOfGuesses || cursorPosition[1] < numOfLetters) {
-      return;
-    }
-    const result = game.guess(letterStates.value[cursorPosition[0]].map((x) => x.letter).join(""));
-    loadGuessResult(result);
+    submitGuess();
   } else if (key === "BACKSPACE") {
     if (cursorPosition[1] > 0) {
       letterStates.value[cursorPosition[0]][cursorPosition[1] - 1].letter = undefined;
@@ -85,6 +88,27 @@ function handleKeyPress(key: string) {
       cursorPosition[1]++;
     }
   }
+}
+
+function submitGuess() {
+  if (
+    cursorPosition[0] >= numOfGuesses ||
+    cursorPosition[1] < numOfLetters ||
+    shakeRow.value ||
+    isRevealing
+  ) {
+    return;
+  }
+  const word = letterStates.value[cursorPosition[0]].map((x) => x.letter).join("");
+  if (!game.isValid(word)) {
+    shakeRow.value = true;
+    sleep(600).then(() => {
+      shakeRow.value = false;
+    });
+    return;
+  }
+  const result = game.guess(word);
+  loadGuessResult(result);
 }
 
 async function loadGuessResult(guessResult: LetterResult[]): Promise<void> {
@@ -215,6 +239,34 @@ async function loadGuessResult(guessResult: LetterResult[]): Promise<void> {
   }
   .letterBox.unset {
     border: none;
+  }
+}
+
+.shake {
+  animation-name: Shake;
+  animation-duration: 600ms;
+}
+
+@keyframes Shake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+
+  30%,
+  50%,
+  70% {
+    transform: translateX(-4px);
+  }
+
+  40%,
+  60% {
+    transform: translateX(4px);
   }
 }
 </style>
