@@ -5,10 +5,14 @@
         <div
           class="letterBox"
           v-for="(letter, letterIdx) in row"
-          :class="[LetterStatus[letter.status].toLowerCase(), letter.letter ? 'filled' : '']"
+          :class="[
+            LetterStatus[letter.status].toLowerCase(),
+            letter.letter ? 'filled pop' : '',
+            letter.status !== LetterStatus.Unset ? 'flip' : '',
+          ]"
           :key="letterIdx"
         >
-          {{ letter.letter ?? "" }}
+          <span>{{ letter.letter ?? "" }}</span>
         </div>
       </div>
     </div>
@@ -18,8 +22,9 @@
 </template>
 
 <script lang="ts" setup>
+import { Game } from "@/algorithm/game";
 import { LetterStatus } from "@/letterStatus";
-import { onMounted, onUnmounted } from "vue";
+import { onMounted, onUnmounted, Ref, ref } from "vue";
 import Keyboard from "./Keyboard.vue";
 
 interface LetterState {
@@ -30,11 +35,16 @@ interface LetterState {
 const numOfLetters = 5;
 const numOfGuesses = 6;
 
-const letterStates: LetterState[][] = Array.from(Array(numOfGuesses)).map(() => {
-  return Array.from(Array(numOfLetters)).map(() => ({
-    status: LetterStatus.Unset,
-  }));
-});
+const cursorPosition = [0, 0];
+const letterStates: Ref<LetterState[][]> = ref(
+  Array.from(Array(numOfGuesses)).map(() => {
+    return Array.from(Array(numOfLetters)).map(() => ({
+      status: LetterStatus.Unset,
+    }));
+  })
+);
+
+let game = new Game(5);
 
 onMounted(() => {
   document.addEventListener("keydown", handleNativeKeyDown);
@@ -48,7 +58,21 @@ function handleNativeKeyDown(e: KeyboardEvent) {
   handleKeyPress(e.key.toUpperCase());
 }
 
-function handleKeyPress(key: string) {}
+function handleKeyPress(key: string) {
+  if (key === "ENTER") {
+    // TODO: handle enter
+  } else if (key === "BACKSPACE") {
+    if (cursorPosition[1] > 0) {
+      letterStates.value[cursorPosition[0]][cursorPosition[1] - 1].letter = undefined;
+      cursorPosition[1]--;
+    }
+  } else if (/^[A-Z]$/.test(key)) {
+    if (cursorPosition[1] < numOfLetters) {
+      letterStates.value[cursorPosition[0]][cursorPosition[1]].letter = key;
+      cursorPosition[1]++;
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -65,6 +89,11 @@ function handleKeyPress(key: string) {}
   flex: 1;
   box-sizing: border-box;
   color: var(--whiteClr);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 21px;
+  font-weight: bold;
 }
 .letterBox.unset {
   border: 2px solid var(--keyClr);
@@ -90,5 +119,38 @@ function handleKeyPress(key: string) {}
   justify-content: center;
   gap: 6px;
   flex: 1;
+}
+
+.pop {
+  animation-name: Pop;
+  animation-duration: 100ms;
+}
+
+@keyframes Pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  40% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+.flip {
+  animation-duration: 250ms;
+  animation-timing-function: ease-in;
+  animation-name: Flip;
+}
+@keyframes Flip {
+  0% {
+    transform: rotateX(0);
+  }
+  50% {
+    transform: rotateX(-90deg);
+  }
+  100% {
+    transform: rotateX(0);
+  }
 }
 </style>
