@@ -22,3 +22,16 @@ export function groupBy<T, TKey extends number | string, TResult>(
     return acc;
   }, {} as Record<TKey, TResult>);
 }
+
+export function randomItemFromSet<T>(set: Set<T>): T {
+  if (set.size === 0) {
+    throw new Error("Cannot get random item from empty set");
+  }
+  const index = Math.floor(Math.random() * set.size);
+  const iterator = set.values();
+  for (let i = 0; i < index; i++) {
+    iterator.next();
+  }
+
+  return iterator.next().value;
+}

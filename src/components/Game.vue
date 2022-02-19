@@ -23,7 +23,8 @@
 
 <script lang="ts" setup>
 import { Game } from "@/algorithm/game";
-import { LetterStatus } from "@/letterStatus";
+import { LetterResult } from "@/algorithm/solver";
+import { LetterStatus } from "@/algorithm/letterStatus";
 import { onMounted, onUnmounted, Ref, ref } from "vue";
 import Keyboard from "./Keyboard.vue";
 
@@ -44,7 +45,7 @@ const letterStates: Ref<LetterState[][]> = ref(
   })
 );
 
-let game = new Game(5);
+let game = new Game();
 
 onMounted(() => {
   document.addEventListener("keydown", handleNativeKeyDown);
@@ -60,7 +61,11 @@ function handleNativeKeyDown(e: KeyboardEvent) {
 
 function handleKeyPress(key: string) {
   if (key === "ENTER") {
-    // TODO: handle enter
+    if (cursorPosition[0] >= numOfGuesses || cursorPosition[1] < numOfLetters) {
+      return;
+    }
+    const result = game.guess(letterStates.value[cursorPosition[0]].map((x) => x.letter).join());
+    loadGuessResult(result);
   } else if (key === "BACKSPACE") {
     if (cursorPosition[1] > 0) {
       letterStates.value[cursorPosition[0]][cursorPosition[1] - 1].letter = undefined;
@@ -72,6 +77,17 @@ function handleKeyPress(key: string) {
       cursorPosition[1]++;
     }
   }
+}
+
+function loadGuessResult(guessResult: LetterResult[]) {
+  if (cursorPosition[0] >= numOfGuesses) {
+    return;
+  }
+  letterStates.value[cursorPosition[0]].forEach((letterState, idx) => {
+    letterState.status = guessResult[idx].status;
+    letterState.letter = guessResult[idx].letter;
+  });
+  cursorPosition[0]++;
 }
 </script>
 

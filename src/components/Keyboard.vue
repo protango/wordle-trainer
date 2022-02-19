@@ -21,7 +21,7 @@
 </template>
 
 <script lang="ts" setup>
-import { LetterStatus } from "@/letterStatus";
+import { LetterStatus } from "@/algorithm/letterStatus";
 import { PropType } from "vue";
 
 const keys: string[][] = "QWERTYUIOP\nASDFGHJKL\nZXCVBNM".split("\n").map((row) => [...row]);
