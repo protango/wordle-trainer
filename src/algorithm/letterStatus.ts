@@ -1,5 +1,5 @@
 export enum LetterStatus {
-  Absent,
-  Present,
-  Correct,
+  Absent = 0,
+  Present = 1,
+  Correct = 2,
 }

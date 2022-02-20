@@ -26,7 +26,7 @@
         </div>
       </div>
 
-      <Keyboard @key-press="handleKeyPress"></Keyboard>
+      <Keyboard @key-press="handleKeyPress" :key-status="kbStatus"></Keyboard>
     </div>
   </div>
 </template>
@@ -59,6 +59,8 @@ const letterStates: Ref<LetterState[][]> = ref(
   })
 );
 
+const kbStatus = ref<Record<string, LetterStatus>>({});
+
 let shakeRow = ref(false);
 
 let game = new Game();
@@ -73,21 +75,21 @@ onUnmounted(() => {
 });
 
 function handleNativeKeyDown(e: KeyboardEvent) {
-  handleKeyPress(e.key.toUpperCase());
+  handleKeyPress(e.key.toLowerCase());
 }
 
 function handleKeyPress(key: string) {
   if (isRevealing) {
     return;
   }
-  if (key === "ENTER") {
+  if (key === "enter") {
     submitGuess();
-  } else if (key === "BACKSPACE") {
+  } else if (key === "backspace") {
     if (cursorPosition[1] > 0) {
       letterStates.value[cursorPosition[0]][cursorPosition[1] - 1].letter = undefined;
       cursorPosition[1]--;
     }
-  } else if (/^[A-Z]$/.test(key)) {
+  } else if (/^[a-z]$/.test(key)) {
     if (cursorPosition[1] < numOfLetters) {
       letterStates.value[cursorPosition[0]][cursorPosition[1]].letter = key;
       cursorPosition[1]++;
@@ -115,6 +117,7 @@ async function submitGuess() {
   const result = game.guess(word);
   await loadGuessResult(result);
   feedback.value = newFeedback;
+  kbStatus.value = game.letterStates;
 }
 
 async function loadGuessResult(guessResult: LetterResult[]): Promise<void> {

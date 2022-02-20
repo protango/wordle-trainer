@@ -146,6 +146,22 @@ export class Solver {
     this.guesses.push(guess);
     this.updateLetterPossibilities(guess);
     this.solved = guess.result.every((x) => x.status === LetterStatus.Correct);
+
+    this.updateLetterStates();
+  }
+
+  private updateLetterStates(): void {
+    const result: Record<string, LetterStatus> = {};
+    for (const [letter, mc] of this.answerMustContain) {
+      if (result[letter] === undefined) {
+        result[letter] = mc.solved
+          ? LetterStatus.Correct
+          : mc.count > 0
+          ? LetterStatus.Present
+          : LetterStatus.Absent;
+      }
+    }
+    this.letterStates = result;
   }
 
   private updateLetterPossibilities(guess: GuessResult): void {
@@ -323,4 +339,6 @@ export class Solver {
     }
     return score;
   }
+
+  public letterStates: Record<string, LetterStatus> = {};
 }
