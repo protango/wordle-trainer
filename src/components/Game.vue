@@ -1,30 +1,33 @@
 <template>
-  <div class="playArea">
-    <div style="flex: 1; display: flex; align-items: center; min-height: 0">
-      <div class="gameBoard" :style="{ 'aspect-ratio': numOfLetters + '/' + numOfGuesses }">
-        <div
-          class="row"
-          v-for="(row, guessIdx) in letterStates"
-          :key="guessIdx"
-          :class="[shakeRow && cursorPosition[0] === guessIdx ? 'shake' : '']"
-        >
+  <div style="display: flex; flex-direction: column; height: 100%">
+    <FeedbackBar></FeedbackBar>
+    <div class="playArea">
+      <div style="flex: 1; display: flex; align-items: center; min-height: 0">
+        <div class="gameBoard" :style="{ 'aspect-ratio': numOfLetters + '/' + numOfGuesses }">
           <div
-            class="letterBox"
-            v-for="(letter, letterIdx) in row"
-            :class="[
-              letter.letter ? 'filled pop' : '',
-              letter.status !== undefined ? LetterStatus[letter.status].toLowerCase() : 'unset',
-              letter.flip ? 'flip' : '',
-            ]"
-            :key="letterIdx"
+            class="row"
+            v-for="(row, guessIdx) in letterStates"
+            :key="guessIdx"
+            :class="[shakeRow && cursorPosition[0] === guessIdx ? 'shake' : '']"
           >
-            <span>{{ letter.letter ?? "" }}</span>
+            <div
+              class="letterBox"
+              v-for="(letter, letterIdx) in row"
+              :class="[
+                letter.letter ? 'filled pop' : '',
+                letter.status !== undefined ? LetterStatus[letter.status].toLowerCase() : 'unset',
+                letter.flip ? 'flip' : '',
+              ]"
+              :key="letterIdx"
+            >
+              <span>{{ letter.letter ?? "" }}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <Keyboard @key-press="handleKeyPress"></Keyboard>
+      <Keyboard @key-press="handleKeyPress"></Keyboard>
+    </div>
   </div>
 </template>
 
@@ -34,6 +37,7 @@ import { LetterResult } from "@/algorithm/solver";
 import { LetterStatus } from "@/algorithm/letterStatus";
 import { onMounted, onUnmounted, Ref, ref } from "vue";
 import Keyboard from "./Keyboard.vue";
+import FeedbackBar from "./FeedbackBar.vue";
 import { sleep } from "@/algorithm/utilities";
 
 interface LetterState {
@@ -180,10 +184,9 @@ async function loadGuessResult(guessResult: LetterResult[]): Promise<void> {
 
 .playArea {
   max-width: 500px;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
   margin-top: 5px;
 }
 

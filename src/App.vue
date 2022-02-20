@@ -87,9 +87,17 @@ footer {
     line-height: unset;
     padding-bottom: 2px;
   }
+
+  .logo {
+    font-size: 24px;
+  }
+
+  header {
+    height: 45px;
+  }
 }
 
-@media (max-height: 400px) {
+@media (max-height: 700px) {
   footer {
     display: none;
   }

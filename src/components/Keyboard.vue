@@ -44,7 +44,7 @@ defineEmits<{
   display: flex;
   flex-direction: row;
   justify-content: center;
-  margin: 4px 0;
+  margin: 6px 0;
 }
 
 .key {
@@ -58,9 +58,8 @@ defineEmits<{
   cursor: pointer;
   flex: 1;
   padding: 0;
-  margin: 0 2px;
+  margin: 0 3px;
   color: var(--blackClr);
-  touch-action: manipulation;
   user-select: none;
 }
 
@@ -82,5 +81,11 @@ defineEmits<{
 
 .key.big-key {
   flex: 1.5;
+}
+
+@media (max-height: 670px) {
+  .key {
+    height: 40px;
+  }
 }
 </style>
