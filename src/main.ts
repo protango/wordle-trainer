@@ -8,6 +8,9 @@ import {
   faThumbsUp,
   faThumbsDown,
   faAngleDown,
+  faStar,
+  faQuestion,
+  faBrain,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
@@ -20,7 +23,10 @@ library.add(
   faDeleteLeft,
   faThumbsUp,
   faThumbsDown,
-  faAngleDown
+  faAngleDown,
+  faStar,
+  faQuestion,
+  faBrain
 );
 
 createApp(App).component("fa", FontAwesomeIcon).mount("#app");

@@ -61,6 +61,7 @@ defineEmits<{
   margin: 0 3px;
   color: var(--blackClr);
   user-select: none;
+  touch-action: manipulation;
 }
 
 .key.correct {

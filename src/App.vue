@@ -129,6 +129,8 @@ html {
 :root {
   --bgClr: #fff;
   --keyClr: #d3d6da;
+  --blueClr: #6496aa;
+  --redClr: #aa6464;
   --correctClr: #6aaa64;
   --presentClr: #c9b458;
   --absentClr: #787c7e;

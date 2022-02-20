@@ -1,6 +1,6 @@
 <template>
   <div style="display: flex; flex-direction: column; height: 100%">
-    <FeedbackBar></FeedbackBar>
+    <FeedbackBar :feedback="feedback"></FeedbackBar>
     <div class="playArea">
       <div style="flex: 1; display: flex; align-items: center; min-height: 0">
         <div class="gameBoard" :style="{ 'aspect-ratio': numOfLetters + '/' + numOfGuesses }">
@@ -32,7 +32,7 @@
 </template>
 
 <script lang="ts" setup>
-import { Game } from "@/algorithm/game";
+import { Feedback, Game } from "@/algorithm/game";
 import { LetterResult } from "@/algorithm/solver";
 import { LetterStatus } from "@/algorithm/letterStatus";
 import { onMounted, onUnmounted, Ref, ref } from "vue";
@@ -50,6 +50,7 @@ const numOfLetters = 5;
 const numOfGuesses = 6;
 
 const cursorPosition = [0, 0];
+const feedback = ref<Feedback | undefined>(undefined);
 const letterStates: Ref<LetterState[][]> = ref(
   Array.from(Array(numOfGuesses)).map(() => {
     return Array.from(Array(numOfLetters)).map(() => ({
@@ -94,7 +95,7 @@ function handleKeyPress(key: string) {
   }
 }
 
-function submitGuess() {
+async function submitGuess() {
   if (
     cursorPosition[0] >= numOfGuesses ||
     cursorPosition[1] < numOfLetters ||
@@ -106,13 +107,14 @@ function submitGuess() {
   const word = letterStates.value[cursorPosition[0]].map((x) => x.letter).join("");
   if (!game.isValid(word)) {
     shakeRow.value = true;
-    sleep(600).then(() => {
-      shakeRow.value = false;
-    });
+    await sleep(600);
+    shakeRow.value = false;
     return;
   }
+  const newFeedback = game.feedback(word);
   const result = game.guess(word);
-  loadGuessResult(result);
+  await loadGuessResult(result);
+  feedback.value = newFeedback;
 }
 
 async function loadGuessResult(guessResult: LetterResult[]): Promise<void> {
@@ -128,6 +130,7 @@ async function loadGuessResult(guessResult: LetterResult[]): Promise<void> {
     wordLetterStates[i].letter = guessResult[i].letter;
   }
 
+  await sleep(300);
   cursorPosition[0]++;
   cursorPosition[1] = 0;
   isRevealing = false;

@@ -3,6 +3,11 @@ import rawAnswerWords from "./data/answerWords.json";
 import { letterCounts } from "./utilities";
 import { LetterStatus } from "./letterStatus";
 
+export interface ScoredWord {
+  word: string;
+  score: number;
+}
+
 export interface LetterResult {
   letter: string;
   position: number;
@@ -125,10 +130,13 @@ export class Solver {
   private possibleSolutions: Set<string> = new Set(Solver.answerWords);
   private possibleGuesses: Set<string> = new Set(Solver.allWords);
 
+  private possibleSolutionScoringHist: Record<string, number>;
+
   constructor(length: number) {
     this.positions = [...Array(length)].map(() => ({
       cantBe: [],
     }));
+    this.possibleSolutionScoringHist = this.getScoreHistogram();
   }
 
   protected addGuess(guess: GuessResult): void {
@@ -187,6 +195,9 @@ export class Solver {
         this.possibleSolutions.delete(x);
       }
     });
+
+    // Update letter scoring histogram
+    this.possibleSolutionScoringHist = this.getScoreHistogram();
   }
 
   private generateRegex(): RegExp {
@@ -219,11 +230,11 @@ export class Solver {
     return new RegExp(result);
   }
 
-  public bestGuess(): string | undefined {
+  public bestGuesses(top = 10): ScoredWord[] {
     if (this.possibleSolutions.size === 0) {
-      return undefined;
+      return [];
     } else if (this.possibleSolutions.size === 1) {
-      return this.possibleSolutions.values().next().value;
+      return [{ word: this.possibleSolutions.values().next().value, score: 1 }];
     }
 
     const bannedLetters = new Set<string>();
@@ -232,7 +243,30 @@ export class Solver {
         bannedLetters.add(letter);
       }
     }
+    const guessScores: (ScoredWord & { tieBreaker: number })[] = [];
+    this.possibleGuesses.forEach((x) => {
+      const score = this.getWordScore(x);
+      if (score === 0) {
+        this.possibleGuesses.delete(x);
+      } else {
+        const isAnswerWord = Solver.answerWords.has(x);
+        const isPossibleSolution = this.possibleSolutions.has(x);
+        const tieBreaker = isPossibleSolution ? 2 : isAnswerWord ? 1 : 0;
+        guessScores.push({ word: x, score, tieBreaker });
+      }
+    });
 
+    guessScores.sort((a, b) => b.score - a.score || b.tieBreaker - a.tieBreaker);
+
+    return top ? guessScores.slice(0, top) : guessScores;
+  }
+
+  public bestGuess(): string | undefined {
+    const guesses = this.bestGuesses(1);
+    return guesses.length ? guesses[0].word : undefined;
+  }
+
+  private getScoreHistogram(): Record<string, number> {
     const hist = {} as Record<string, number>;
     this.possibleSolutions.forEach((x) => {
       const seen = new Set<string>();
@@ -243,26 +277,10 @@ export class Solver {
       });
     });
 
-    const best: { word?: string; score: number; tieBreaker: number } = { score: 0, tieBreaker: 0 };
-    this.possibleGuesses.forEach((x) => {
-      const score = this.getWordScore(x, hist);
-      const isAnswerWord = Solver.answerWords.has(x);
-      const isPossibleSolution = this.possibleSolutions.has(x);
-      const tieBreaker = isPossibleSolution ? 2 : isAnswerWord ? 1 : 0;
-      if (score > best.score || (score === best.score && tieBreaker > best.tieBreaker)) {
-        best.word = x;
-        best.score = score;
-        best.tieBreaker = tieBreaker;
-      }
-      if (score === 0) {
-        this.possibleGuesses.delete(x);
-      }
-    });
-
-    return best.word;
+    return hist;
   }
 
-  private getWordScore(word: string, hist: Record<string, number>): number {
+  protected getWordScore(word: string): number {
     let score = 0;
 
     const seenLetters = new Set<string>();
@@ -301,7 +319,7 @@ export class Solver {
         continue; // Award no points if we already have all the answers we need for this letter
       }
 
-      score += hist[letter] || 0;
+      score += this.possibleSolutionScoringHist[letter] || 0;
     }
     return score;
   }

@@ -1,17 +1,26 @@
 <template>
-  <div class="feedbackBar">
+  <div
+    class="feedbackBar"
+    :style="{
+      background: achievementLevel?.color,
+    }"
+    :class="{
+      initial: !feedback,
+    }"
+  >
     <div class="icon">
-      <div v-if="initial" class="initialIcon">
+      <div v-if="!achievementLevel" class="initialIcon">
         <fa icon="thumbs-up" />
         <fa icon="thumbs-down" />
       </div>
+      <fa v-else :icon="achievementLevel.icon" />
     </div>
     <div class="feedback">
-      <span>Enter first guess</span>
+      <span>{{ achievementLevel ? achievementLevel.text : "Enter a guess" }}</span>
     </div>
     <div class="score">
       <span class="scoreTitle">WORD<br />SCORE</span>
-      <span class="scoreValue">0</span>
+      <span class="scoreValue">{{ props.feedback?.guessScorePercent ?? 0 }}</span>
       <span class="pcnt">%</span>
     </div>
     <div class="expandBtn">
@@ -21,20 +30,56 @@
 </template>
 
 <script lang="ts" setup>
-let initial = true;
+import { Feedback } from "@/algorithm/game";
+import { computed, PropType } from "vue";
+
+interface AchievementLevel {
+  text: string;
+  icon: string;
+  color: string;
+  threshold: number;
+}
+
+const props = defineProps({
+  feedback: Object as PropType<Feedback>,
+});
+
+const achievementLevels: AchievementLevel[] = [
+  { text: "Best Word", icon: "brain", threshold: 100, color: "var(--blueClr)" },
+  { text: "Excellent", icon: "star", threshold: 75, color: "var(--correctClr)" },
+  { text: "Good", icon: "thumbs-up", threshold: 50, color: "var(--presentClr)" },
+  { text: "Mistake", icon: "thumbs-down", threshold: 25, color: "var(--absentClr)" },
+  { text: "Blunder", icon: "question", threshold: 0, color: "var(--redClr)" },
+];
+
+const achievementLevel = computed<AchievementLevel | undefined>(() => {
+  if (!props.feedback) {
+    return undefined;
+  }
+  for (const al of achievementLevels) {
+    if (props.feedback.guessScorePercent >= al.threshold) {
+      return al;
+    }
+  }
+  return undefined;
+});
 </script>
 
 <style scoped>
 .feedbackBar {
   height: 50px;
-  border-bottom: 1px solid var(--keyClr);
+  box-shadow: 0 1px 3px var(--absentClr);
   padding: 1px 6px;
   box-sizing: border-box;
   display: flex;
-  color: var(--absentClr);
   background: var(--keyClr);
   margin-bottom: 7px;
   position: relative;
+  color: var(--whiteClr);
+}
+
+.feedbackBar.initial {
+  color: var(--blackClr);
 }
 
 .feedback {
@@ -45,6 +90,14 @@ let initial = true;
 .icon {
   height: 100%;
   aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon > svg {
+  height: 30px;
+  width: 30px;
 }
 
 .initialIcon {
@@ -57,7 +110,7 @@ let initial = true;
   position: absolute;
   width: 40%;
   height: 40%;
-  color: var(--blackClr);
+  color: var(--absentClr);
 }
 
 .initialIcon > svg:first-child {
@@ -79,23 +132,20 @@ let initial = true;
   font-weight: bold;
   line-height: 9px;
   margin-right: 5px;
-  font-family: "Roboto", sans-serif;
 }
 
 .score {
   display: flex;
   align-items: center;
-  font-family: "Suez One", serif;
 }
 
 .score .scoreValue {
-  font-size: 40px;
+  font-size: 36px;
+  font-weight: bold;
   margin-left: 5px;
   text-align: center;
   display: inline-block;
   position: relative;
-  top: -4px;
-  color: var(--blackClr);
 }
 
 .score .pcnt {
@@ -103,14 +153,12 @@ let initial = true;
   top: -8px;
   font-size: 20px;
   margin-left: 2px;
-  color: var(--blackClr);
 }
 
 .feedback {
   display: flex;
   align-items: center;
   margin: 0 8px;
-  color: var(--blackClr);
 }
 
 .expandBtn {
