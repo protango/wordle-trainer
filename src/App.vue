@@ -1,5 +1,5 @@
 <template>
-  <header>
+  <header class="mainHeader">
     <div class="header-buffer">
       <fa icon="circle-question" class="headerBtn" />
     </div>
@@ -9,7 +9,7 @@
       <fa icon="gear" class="headerBtn" />
     </div>
   </header>
-  <main>
+  <main class="main">
     <Game></Game>
   </main>
   <footer>
@@ -26,7 +26,7 @@ import Game from "./components/Game.vue";
 </script>
 
 <style>
-header {
+.mainHeader {
   height: 50px;
   display: flex;
   align-items: center;
@@ -110,7 +110,7 @@ footer {
   overflow: hidden;
 }
 
-main {
+main.main {
   flex: 1 1 auto;
   min-height: 0;
 }
@@ -126,6 +126,10 @@ html {
   height: 100%;
 }
 
+button {
+  touch-action: manipulation;
+}
+
 :root {
   --bgClr: #fff;
   --keyClr: #d3d6da;
@@ -135,6 +139,27 @@ html {
   --presentClr: #c9b458;
   --absentClr: #787c7e;
   --blackClr: #000;
+  --alertClr: rgba(0, 0, 0, 0.8);
   --whiteClr: #fff;
+  --selectedClr: #2855e9;
+  --luckyClr: #1d8025;
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeout {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 </style>

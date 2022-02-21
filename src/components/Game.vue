@@ -17,6 +17,7 @@
                 letter.letter ? 'filled pop' : '',
                 letter.status !== undefined ? LetterStatus[letter.status].toLowerCase() : 'unset',
                 letter.flip ? 'flip' : '',
+                letter.status !== undefined && letter.isStatusInput ? 'input' : '',
               ]"
               :key="letterIdx"
             >
@@ -26,24 +27,41 @@
         </div>
       </div>
 
-      <Keyboard @key-press="handleKeyPress" :key-status="kbStatus"></Keyboard>
+      <Keyboard
+        @key-press="handleKeyPress"
+        v-model:inputLetterStatus="kbInputStatus"
+        :key-status="kbStatus"
+        :guess-in-progress="!!cursorPosition[1]"
+        :solved="isSolved"
+      ></Keyboard>
     </div>
+    <AlertManager></AlertManager>
+    <HintModal
+      v-model:show="showHints"
+      :possibleSolutions="possibleSolutions"
+      :top-words="topWords"
+      @accept-word="acceptWord"
+    ></HintModal>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { Feedback, Game } from "@/algorithm/game";
-import { LetterResult } from "@/algorithm/solver";
+import { LetterResult, ScoredWord } from "@/algorithm/solver";
 import { LetterStatus } from "@/algorithm/letterStatus";
 import { onMounted, onUnmounted, Ref, ref } from "vue";
 import Keyboard from "./Keyboard.vue";
 import FeedbackBar from "./FeedbackBar.vue";
 import { sleep } from "@/algorithm/utilities";
+import AlertManager from "./AlertManager.vue";
+import { AlertManager as Alert } from "./AlertManager";
+import HintModal from "./HintModal.vue";
 
 interface LetterState {
   letter?: string;
   status?: LetterStatus;
   flip: boolean;
+  isStatusInput: boolean;
 }
 
 const numOfLetters = 5;
@@ -55,16 +73,22 @@ const letterStates: Ref<LetterState[][]> = ref(
   Array.from(Array(numOfGuesses)).map(() => {
     return Array.from(Array(numOfLetters)).map(() => ({
       flip: false,
+      isStatusInput: false,
     }));
   })
 );
 
 const kbStatus = ref<Record<string, LetterStatus>>({});
+const kbInputStatus = ref<LetterStatus | undefined>(undefined);
+const showHints = ref(false);
+const possibleSolutions = ref<string[]>([]);
+const topWords = ref<ScoredWord[]>([]);
 
 let shakeRow = ref(false);
 
 let game = new Game();
 let isRevealing = false;
+const isSolved = ref(false);
 
 onMounted(() => {
   document.addEventListener("keydown", handleNativeKeyDown);
@@ -78,20 +102,35 @@ function handleNativeKeyDown(e: KeyboardEvent) {
   handleKeyPress(e.key.toLowerCase());
 }
 
-function handleKeyPress(key: string) {
+function handleKeyPress(key: string, status = kbInputStatus.value) {
   if (isRevealing) {
     return;
-  }
-  if (key === "enter") {
+  } else if (key === "restart") {
+    reset();
+  } else if (key === "undo") {
+    undo();
+  } else if (key === "hint") {
+    topWords.value = game.bestGuesses(5);
+    possibleSolutions.value = Array.from(game.possibleSolutions);
+    showHints.value = true;
+  } else if (game.solved) {
+    return;
+  } else if (key === "enter") {
     submitGuess();
   } else if (key === "backspace") {
     if (cursorPosition[1] > 0) {
-      letterStates.value[cursorPosition[0]][cursorPosition[1] - 1].letter = undefined;
+      const letterState = letterStates.value[cursorPosition[0]][cursorPosition[1] - 1];
+      letterState.letter = undefined;
+      letterState.status = undefined;
+      letterState.isStatusInput = false;
       cursorPosition[1]--;
     }
   } else if (/^[a-z]$/.test(key)) {
     if (cursorPosition[1] < numOfLetters) {
-      letterStates.value[cursorPosition[0]][cursorPosition[1]].letter = key;
+      const letterState = letterStates.value[cursorPosition[0]][cursorPosition[1]];
+      letterState.letter = key;
+      letterState.status = status;
+      letterState.isStatusInput = status !== undefined;
       cursorPosition[1]++;
     }
   }
@@ -107,17 +146,63 @@ async function submitGuess() {
     return;
   }
   const word = letterStates.value[cursorPosition[0]].map((x) => x.letter).join("");
+  const inputResult = letterStates.value[cursorPosition[0]].map((x) => x.status);
   if (!game.isValid(word)) {
-    shakeRow.value = true;
-    await sleep(600);
-    shakeRow.value = false;
+    Alert.show("Not in word list");
+    doShakeRow();
     return;
   }
   const newFeedback = game.feedback(word);
-  const result = game.guess(word);
+  const ogPossibleSolutionCount = game.possibleSolutions.size;
+  const result = game.guess(
+    word,
+    inputResult.every((x): x is LetterStatus => x !== undefined) ? inputResult : undefined
+  );
+  if (game.possibleSolutions.size === 0) {
+    Alert.show(game.solved ? "Not a possible solution" : "No possible solutions");
+    game.undoLastGuess();
+    doShakeRow();
+    return;
+  }
+  newFeedback.solutionSetShrinkPcnt =
+    (1 - game.possibleSolutions.size / ogPossibleSolutionCount) * 100;
+  if (
+    (newFeedback.guessScorePercent <= 50 &&
+      (game.solved || newFeedback.solutionSetShrinkPcnt > 80)) ||
+    (game.solved && cursorPosition[0] === 0)
+  ) {
+    newFeedback.lucky = true;
+  }
+  console.log(
+    `${ogPossibleSolutionCount} -> ${game.possibleSolutions.size} (${newFeedback.solutionSetShrinkPcnt}%)`
+  );
+
   await loadGuessResult(result);
   feedback.value = newFeedback;
   kbStatus.value = game.letterStates;
+
+  if (game.solved) {
+    const messages = [
+      "🤥 Ok sis...",
+      "🤯 Einstein 2.0?",
+      "🤩 Awesome!",
+      "😊 Nice",
+      "😉 Not bad",
+      "😅 Phew!",
+    ];
+    const message = messages[cursorPosition[0] - 1] ?? "🤩 Awesome!";
+    isSolved.value = true;
+    Alert.show(message);
+  } else if (cursorPosition[0] === numOfGuesses) {
+    Alert.show("☹ Maybe next time");
+    Alert.show("Answer: " + game.solution);
+  }
+}
+
+async function doShakeRow() {
+  shakeRow.value = true;
+  await sleep(600);
+  shakeRow.value = false;
 }
 
 async function loadGuessResult(guessResult: LetterResult[]): Promise<void> {
@@ -131,12 +216,67 @@ async function loadGuessResult(guessResult: LetterResult[]): Promise<void> {
     await sleep(300);
     wordLetterStates[i].status = guessResult[i].status;
     wordLetterStates[i].letter = guessResult[i].letter;
+    wordLetterStates[i].isStatusInput = false;
   }
 
   await sleep(300);
   cursorPosition[0]++;
   cursorPosition[1] = 0;
   isRevealing = false;
+}
+
+function reset() {
+  game.reset();
+  isSolved.value = false;
+  kbStatus.value = {};
+
+  cursorPosition[0] = 0;
+  cursorPosition[1] = 0;
+
+  letterStates.value = Array.from(Array(numOfGuesses)).map(() => {
+    return Array.from(Array(numOfLetters)).map(() => ({
+      flip: false,
+      isStatusInput: false,
+    }));
+  });
+
+  feedback.value = undefined;
+  kbInputStatus.value = undefined;
+  showHints.value = false;
+  possibleSolutions.value = [];
+  topWords.value = [];
+}
+
+function undo() {
+  Alert.show("Undo");
+  if (cursorPosition[0] === 0) {
+    return;
+  }
+  isSolved.value = false;
+  cursorPosition[0]--;
+  cursorPosition[1] = 0;
+  game.undoLastGuess();
+  kbStatus.value = game.letterStates;
+  feedback.value = undefined;
+  letterStates.value[cursorPosition[0]].forEach((x) => {
+    x.letter = undefined;
+    x.status = undefined;
+    x.isStatusInput = false;
+    x.flip = false;
+  });
+}
+
+function acceptWord(word: string) {
+  Alert.show(`Accepted ${word}`);
+  if (game.solved || cursorPosition[0] >= numOfGuesses) {
+    return;
+  }
+  letterStates.value[cursorPosition[0]].forEach((x) => {
+    x.letter = undefined;
+    x.status = undefined;
+    x.isStatusInput = false;
+    x.flip = false;
+  });
 }
 </script>
 
@@ -160,11 +300,26 @@ async function loadGuessResult(guessResult: LetterResult[]): Promise<void> {
   font-weight: bold;
   text-transform: capitalize;
   padding: 2px;
+  position: relative;
 }
 .letterBox.unset {
   border: 2px solid var(--keyClr);
   color: var(--blackClr);
   padding: 0;
+}
+
+.letterBox.input {
+  border: 2px solid var(--absentClr);
+  padding: 0;
+}
+
+.letterBox.input::after {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  content: "";
+  border: 3px solid var(--whiteClr);
+  box-sizing: border-box;
 }
 
 .letterBox.correct {
@@ -194,6 +349,9 @@ async function loadGuessResult(guessResult: LetterResult[]): Promise<void> {
   flex-direction: column;
   flex: 1;
   margin-top: 5px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
 }
 
 .pop {

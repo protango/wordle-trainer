@@ -56,6 +56,14 @@ const achievementLevel = computed<AchievementLevel | undefined>(() => {
   if (!props.feedback) {
     return undefined;
   }
+  if (props.feedback.lucky) {
+    return {
+      text: "Lucky Guess",
+      icon: "clover",
+      color: "var(--luckyClr)",
+      threshold: 0,
+    };
+  }
   for (const al of achievementLevels) {
     if (props.feedback.guessScorePercent >= al.threshold) {
       return al;

@@ -1,3 +1,4 @@
+import { LetterStatus } from "./letterStatus";
 import { GuessResult, LetterResult, ScoredWord, Solver } from "./solver";
 import { randomItemFromSet } from "./utilities";
 
@@ -6,6 +7,7 @@ export interface Feedback {
   guess: string;
   guessScorePercent: number;
   lucky: boolean;
+  solutionSetShrinkPcnt: number;
 }
 export class Game extends Solver {
   public solution: string;
@@ -19,13 +21,23 @@ export class Game extends Solver {
     console.log(solution);
   }
 
-  public guess(guess: string): LetterResult[] {
+  public guess(guess: string, result?: LetterStatus[]): LetterResult[] {
     guess = guess.toLowerCase();
     if (!this.isValid(guess)) {
       throw new Error("Not a valid word");
     }
-    const gr = new GuessResult(guess.toLowerCase(), this.solution);
+    if (result && result.length !== guess.length) {
+      throw new Error("Invalid result length");
+    }
+    const gr: GuessResult = result
+      ? new GuessResult(guess.toLowerCase(), result)
+      : new GuessResult(guess.toLowerCase(), this.solution);
     this.addGuess(gr);
+    if (result && !this.possibleSolutions.has(this.solution) && this.possibleSolutions.size) {
+      // Pick another solution if the current one is no longer possible
+      this.solution = randomItemFromSet(this.possibleSolutions);
+      console.log(this.solution);
+    }
     return gr.result;
   }
 
@@ -44,11 +56,18 @@ export class Game extends Solver {
       guess,
       guessScorePercent,
       lucky: false,
+      solutionSetShrinkPcnt: 0,
     };
   }
 
   public isValid(guess: string): boolean {
     guess = guess.toLowerCase();
     return Solver.allWords.has(guess);
+  }
+
+  public reset(): void {
+    super.reset();
+    this.solution = randomItemFromSet(this.possibleSolutions);
+    console.log(this.solution);
   }
 }

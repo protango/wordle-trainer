@@ -114,23 +114,40 @@ enum CountSpecificity {
   GreaterThan,
 }
 
+interface PositionData {
+  answer?: string;
+  cantBe: string[];
+}
+
+interface SolverUndoData {
+  guessResult: GuessResult;
+  answerMustContain: Record<string, MustContain>;
+  deltaPossibleSolutions: string[];
+  positions: PositionData[];
+}
+
+interface MustContain {
+  letter: string;
+  count: number;
+  solved: number;
+  specificity: CountSpecificity;
+}
 export class Solver {
   public static readonly validWords = new Set(rawValidWords);
   public static readonly answerWords = new Set(rawAnswerWords);
   public static readonly allWords = new Set(rawValidWords.concat(rawAnswerWords));
 
+  private undoData: SolverUndoData[] = [];
   public guesses: GuessResult[] = [];
   public solved = false;
-  private positions: { answer?: string; cantBe: string[] }[];
-  public answerMustContain = new Map<
-    string,
-    { count: number; solved: number; specificity: CountSpecificity }
-  >();
+  private positions: PositionData[];
+  public answerMustContain = new Map<string, MustContain>();
 
-  private possibleSolutions: Set<string> = new Set(Solver.answerWords);
+  public possibleSolutions: Set<string> = new Set(Solver.answerWords);
   private possibleGuesses: Set<string> = new Set(Solver.allWords);
 
   private possibleSolutionScoringHist: Record<string, number>;
+  public letterStates: Record<string, LetterStatus> = {};
 
   constructor(length: number) {
     this.positions = [...Array(length)].map(() => ({
@@ -139,15 +156,62 @@ export class Solver {
     this.possibleSolutionScoringHist = this.getScoreHistogram();
   }
 
+  public undoLastGuess(): void {
+    const undoData = this.undoData.pop();
+    if (!undoData) {
+      return;
+    }
+    if (undoData.guessResult !== this.guesses[this.guesses.length - 1]) {
+      throw new Error("Malformed undo data");
+    }
+    this.guesses.pop();
+    undoData.deltaPossibleSolutions.forEach((x) => this.possibleSolutions.add(x));
+    if (this.possibleGuesses.size !== Solver.allWords.size) {
+      this.possibleGuesses = new Set(Solver.allWords);
+    }
+    this.answerMustContain = new Map(Object.entries(undoData.answerMustContain));
+    this.positions = undoData.positions;
+    this.updateLetterStates();
+    this.possibleSolutionScoringHist = this.getScoreHistogram();
+    this.solved = this.positions.every((x) => !!x.answer);
+  }
+
+  public reset(): void {
+    this.guesses = [];
+    this.undoData = [];
+    this.solved = false;
+    this.positions = [...Array(this.positions.length)].map(() => ({
+      cantBe: [],
+    }));
+    this.answerMustContain = new Map();
+    this.possibleSolutions = new Set(Solver.answerWords);
+    this.possibleGuesses = new Set(Solver.allWords);
+    this.possibleSolutionScoringHist = this.getScoreHistogram();
+    this.updateLetterStates();
+  }
+
   protected addGuess(guess: GuessResult): void {
     if (this.solved) {
       throw new Error("Game already solved");
     }
+    this.undoData.push(this.newUndoData(guess));
     this.guesses.push(guess);
     this.updateLetterPossibilities(guess);
     this.solved = guess.result.every((x) => x.status === LetterStatus.Correct);
 
     this.updateLetterStates();
+  }
+
+  private newUndoData(guess: GuessResult): SolverUndoData {
+    return {
+      guessResult: guess,
+      answerMustContain: [...this.answerMustContain.entries()].reduce((a, [k, v]) => {
+        a[k] = { ...v };
+        return a;
+      }, {} as Record<string, MustContain>),
+      deltaPossibleSolutions: [],
+      positions: this.positions.map((x) => ({ ...x })),
+    };
   }
 
   private updateLetterStates(): void {
@@ -173,6 +237,7 @@ export class Solver {
           count: correctLetterCounts[letter],
           specificity: CountSpecificity.GreaterThan,
           solved: mustContain ? mustContain.solved : 0,
+          letter,
         });
       }
     }
@@ -199,6 +264,7 @@ export class Solver {
             count: 0,
             specificity: CountSpecificity.Exactly,
             solved: 0,
+            letter,
           });
         }
       }
@@ -209,6 +275,7 @@ export class Solver {
     this.possibleSolutions.forEach((x) => {
       if (!solutionRx.test(x)) {
         this.possibleSolutions.delete(x);
+        this.undoData[this.undoData.length - 1].deltaPossibleSolutions.push(x);
       }
     });
 
@@ -339,6 +406,4 @@ export class Solver {
     }
     return score;
   }
-
-  public letterStates: Record<string, LetterStatus> = {};
 }

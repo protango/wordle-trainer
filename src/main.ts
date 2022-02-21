@@ -11,6 +11,11 @@ import {
   faStar,
   faQuestion,
   faBrain,
+  faUndo,
+  faArrowsRotate,
+  faClover,
+  faLightbulb,
+  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
@@ -26,7 +31,12 @@ library.add(
   faAngleDown,
   faStar,
   faQuestion,
-  faBrain
+  faBrain,
+  faUndo,
+  faArrowsRotate,
+  faClover,
+  faLightbulb,
+  faXmark
 );
 
 createApp(App).component("fa", FontAwesomeIcon).mount("#app");

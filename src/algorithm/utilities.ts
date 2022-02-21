@@ -39,3 +39,14 @@ export function randomItemFromSet<T>(set: Set<T>): T {
 export function sleep(time: number): Promise<void> {
   return new Promise((r) => setTimeout(r, time));
 }
+
+export function htmlToElement(html: string): Element {
+  const template = document.createElement("template");
+  html = html.trim();
+  template.innerHTML = html;
+  const element = template.content.firstElementChild;
+  if (!element) {
+    throw new Error("Invalid HTML");
+  }
+  return element;
+}
