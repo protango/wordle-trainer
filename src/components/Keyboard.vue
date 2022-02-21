@@ -1,10 +1,14 @@
 <template>
   <div class="keyboard">
     <div class="suppControls">
-      <div>
+      <div class="modeSwitcher">
+        <span :style="{ color: !solveMode ? 'var(--blackClr)' : '' }">PLAY</span>
+        <ToggleSwitch v-model="solveMode" style="font-size: 20px" />
+        <span :style="{ color: solveMode ? 'var(--blackClr)' : '' }">SOLVE</span>
+      </div>
+      <div v-if="solveMode" class="clrBtns">
         <button
           v-for="(ls, i) in [
-          undefined,
           ...Object.values(LetterStatus).filter((x): x is LetterStatus => typeof x === 'number'),
         ]"
           :key="i"
@@ -19,7 +23,7 @@
       </div>
       <div>
         <button class="suppCtrl" @click="$emit('keyPress', 'undo')" v-if="!solved">
-          <fa icon="undo" /><span>UNDO</span>
+          <fa icon="undo" /><span v-if="!solveMode">UNDO</span>
         </button>
         <button class="suppCtrl" @click="$emit('keyPress', 'restart')" v-else>
           <fa icon="arrows-rotate" /><span>RESTART</span>
@@ -57,6 +61,7 @@
 import { LetterStatus } from "@/algorithm/letterStatus";
 import { PropType, ref, watch } from "vue";
 import { AlertManager } from "./AlertManager";
+import ToggleSwitch from "./ToggleSwitch.vue";
 
 const keys: string[][] = "qwertyuiop\nasdfghjkl\nzxcvbnm".split("\n").map((row) => [...row]);
 
@@ -68,6 +73,8 @@ const props = defineProps({
 });
 
 const internalKeyStatus = ref<Record<string, LetterStatus>>({});
+let savedInputLetterStatus = LetterStatus.Absent;
+const solveMode = ref(false);
 
 watch(
   () => props.keyStatus,
@@ -77,6 +84,20 @@ watch(
     }
   },
   { immediate: true }
+);
+
+watch(
+  () => solveMode.value,
+  (newVal) => {
+    if (newVal) {
+      changeColor(savedInputLetterStatus);
+    } else {
+      if (props.inputLetterStatus !== undefined) {
+        savedInputLetterStatus = props.inputLetterStatus;
+      }
+      changeColor(undefined);
+    }
+  }
 );
 
 const emit = defineEmits<{
@@ -189,6 +210,15 @@ function changeColor(color?: LetterStatus) {
   margin-right: 5px;
   cursor: pointer;
   vertical-align: top;
+  animation: fadein 200ms ease;
+  animation-fill-mode: backwards;
+}
+
+.clrBtn:nth-child(2) {
+  animation-delay: 100ms;
+}
+.clrBtn:nth-child(3) {
+  animation-delay: 200ms;
 }
 
 .clrBtn.selected {
@@ -241,6 +271,8 @@ function changeColor(color?: LetterStatus) {
   cursor: pointer;
   margin: 0 2px;
   color: var(--blackClr);
+  height: 28px;
+  vertical-align: top;
 }
 
 .suppCtrl span {
@@ -256,5 +288,22 @@ function changeColor(color?: LetterStatus) {
 
 .suppCtrl:disabled {
   color: var(--absentClr);
+}
+
+.modeSwitcher * {
+  vertical-align: middle;
+}
+
+.modeSwitcher .toggleSwitch {
+  margin: 0 4px;
+}
+
+.modeSwitcher span {
+  color: var(--absentClr);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.clrBtns {
 }
 </style>
