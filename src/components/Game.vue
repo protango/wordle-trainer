@@ -172,7 +172,7 @@ async function submitGuess() {
     (1 - game.possibleSolutions.size / ogPossibleSolutionCount) * 100;
   if (
     (newFeedback.guessScorePercent <= 50 &&
-      (game.solved || newFeedback.solutionSetShrinkPcnt > 80)) ||
+      (game.solved || newFeedback.solutionSetShrinkPcnt > 95)) ||
     (game.solved && cursorPosition[0] === 0)
   ) {
     newFeedback.lucky = true;
@@ -290,6 +290,7 @@ function acceptWord(word: string) {
     });
   });
   cursorPosition[1] = Math.min(word.length, numOfLetters);
+  kbInputStatus.value = undefined;
 }
 
 watch(

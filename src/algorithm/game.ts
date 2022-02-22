@@ -1,4 +1,5 @@
 import { LetterStatus } from "./letterStatus";
+import { MultiScore } from "./multiScore";
 import { GuessResult, LetterResult, ScoredWord, Solver } from "./solver";
 import { randomItemFromSet } from "./utilities";
 
@@ -44,22 +45,22 @@ export class Game extends Solver {
 
   public feedback(guess: string): Feedback {
     guess = guess.toLowerCase();
-    const bestGuesses = this.bestGuesses(10);
+    const allGuesses = this.bestGuesses();
     let guessScorePercent = 0;
     if (this.possibleSolutions.size === 1) {
       guessScorePercent = this.possibleSolutions.has(guess) ? 100 : 0;
     } else if (this.possibleSolutions.size === 2) {
       guessScorePercent = this.possibleSolutions.has(guess)
         ? 100
-        : this.getWordScore(guess) > 0
+        : this.getWordScore(guess).elements[0] > 0
         ? 50
         : 0;
-    } else if (bestGuesses.length) {
-      guessScorePercent = +((this.getWordScore(guess) / bestGuesses[0].score) * 100).toFixed(1);
+    } else if (allGuesses.length) {
+      guessScorePercent = +(allGuesses.find((x) => x.word === guess)?.scorePcnt ?? 0).toFixed(1);
     }
 
     return {
-      bestGuesses,
+      bestGuesses: allGuesses,
       guess,
       guessScorePercent,
       lucky: false,

@@ -118,17 +118,24 @@ function changeColor(color?: LetterStatus) {
     return;
   }
   emit("update:inputLetterStatus", color);
-  if (color === undefined) {
-    internalKeyStatus.value = props.keyStatus ?? {};
-    solveMode.value = false;
-  } else {
-    internalKeyStatus.value = keys.flat().reduce((acc, key) => {
-      acc[key] = color;
-      return acc;
-    }, {} as Record<string, LetterStatus>);
-    solveMode.value = true;
-  }
 }
+
+watch(
+  () => props.inputLetterStatus,
+  (newVal) => {
+    solveMode.value = newVal !== undefined;
+    if (newVal === undefined) {
+      internalKeyStatus.value = props.keyStatus ?? {};
+      solveMode.value = false;
+    } else {
+      internalKeyStatus.value = keys.flat().reduce((acc, key) => {
+        acc[key] = newVal;
+        return acc;
+      }, {} as Record<string, LetterStatus>);
+      solveMode.value = true;
+    }
+  }
+);
 </script>
 
 <style scoped>

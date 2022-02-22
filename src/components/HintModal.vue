@@ -18,9 +18,7 @@
             "
           >
             <span class="wordPill">{{ word.word }}</span
-            ><span class="suppInfo"
-              >{{ +((word.score / topWords[0].score) * 100).toFixed(1) }}%
-            </span>
+            ><span class="suppInfo">{{ +word.scorePcnt.toFixed(1) }}% </span>
           </div>
           <div v-if="!topWords || !topWords.length" class="noHint">
             <span>No suggestions available</span>
