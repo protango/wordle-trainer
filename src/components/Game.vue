@@ -110,7 +110,7 @@ function handleKeyPress(key: string, status = kbInputStatus.value) {
   } else if (key === "undo") {
     undo();
   } else if (key === "hint") {
-    topWords.value = game.bestGuesses(6);
+    topWords.value = game.bestGuesses(9);
     possibleSolutions.value = Array.from(game.possibleSolutions);
     showHints.value = true;
   } else if (game.solved || cursorPosition[0] >= numOfGuesses) {
