@@ -45,7 +45,7 @@ export class Game extends Solver {
 
   public feedback(guess: string): Feedback {
     guess = guess.toLowerCase();
-    const allGuesses = this.bestGuesses();
+    const allGuesses = this.bestGuesses(0);
     let guessScorePercent = 0;
     if (this.possibleSolutions.size === 1) {
       guessScorePercent = this.possibleSolutions.has(guess) ? 100 : 0;
@@ -60,7 +60,7 @@ export class Game extends Solver {
     }
 
     return {
-      bestGuesses: allGuesses,
+      bestGuesses: allGuesses.slice(0, 10),
       guess,
       guessScorePercent,
       lucky: false,

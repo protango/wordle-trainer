@@ -1,12 +1,12 @@
 <template>
   <header class="mainHeader">
     <div class="header-buffer">
-      <fa icon="circle-question" class="headerBtn" />
+      <fa v-if="showHeaderControls" icon="circle-question" class="headerBtn" />
     </div>
     <h1 class="logo">Wordle Coach</h1>
     <div class="header-buffer">
-      <fa icon="square-poll-vertical" class="headerBtn" />
-      <fa icon="gear" class="headerBtn" />
+      <fa v-if="showHeaderControls" icon="square-poll-vertical" class="headerBtn" />
+      <fa v-if="showHeaderControls" icon="gear" class="headerBtn" />
     </div>
   </header>
   <main class="main">
@@ -22,7 +22,10 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import Game from "./components/Game.vue";
+
+const showHeaderControls = ref(false);
 </script>
 
 <style>

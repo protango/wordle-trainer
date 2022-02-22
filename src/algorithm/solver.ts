@@ -362,8 +362,8 @@ export class Solver {
     function applyScoring(bottom: number, top: number, scoreGroup: ScoredWord[]) {
       const topMinorScore = scoreGroup[0].score.elements[1];
       for (const scoredWord of scoreGroup) {
-        scoredWord.scorePcnt =
-          (scoredWord.score.elements[1] / topMinorScore) * (top - bottom) + bottom;
+        const ratio = topMinorScore ? scoredWord.score.elements[1] / topMinorScore : 1;
+        scoredWord.scorePcnt = ratio * (top - bottom) + bottom;
       }
     }
     let scoreGroup = [] as ScoredWord[];
