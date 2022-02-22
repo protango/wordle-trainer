@@ -399,6 +399,7 @@ export class Solver {
 
   private getScoreHistogram(): ScoringHist {
     const hist = { wordsWithLetterCount: {}, wordsWithLetterInPos: {} } as ScoringHist;
+    const seenLetterPositions = new Set<string>();
     // Populate wordsWithLetterCount
     for (const word of this.possibleSolutions) {
       const letterCounts = groupBy(
@@ -411,6 +412,10 @@ export class Solver {
       for (const letter in letterCounts) {
         const count = letterCounts[letter];
         for (let i = 1; i <= count; i++) {
+          const letterPositionKey = `${letter}${i}`;
+          if (seenLetterPositions.has(letterPositionKey)) {
+            continue; // Only award points for each letter in each position once
+          }
           hist.wordsWithLetterCount[letter] = hist.wordsWithLetterCount[letter] ?? {};
           hist.wordsWithLetterCount[letter][i] = (hist.wordsWithLetterCount[letter][i] ?? 0) + 1;
         }
