@@ -8,6 +8,7 @@ export interface Feedback {
   guessScorePercent: number;
   lucky: boolean;
   solutionSetShrinkPcnt: number;
+  missedWin: boolean;
 }
 export class Game extends Solver {
   public solution: string;
@@ -23,7 +24,7 @@ export class Game extends Solver {
 
   public guess(guess: string, result?: LetterStatus[]): LetterResult[] {
     guess = guess.toLowerCase();
-    if (!this.isValid(guess)) {
+    if (!this.isValid(guess) && !result) {
       throw new Error("Not a valid word");
     }
     if (result && result.length !== guess.length) {
@@ -45,8 +46,14 @@ export class Game extends Solver {
     guess = guess.toLowerCase();
     const bestGuesses = this.bestGuesses(10);
     let guessScorePercent = 0;
-    if (bestGuesses.length === 1 && guess === bestGuesses[0].word) {
-      guessScorePercent = 100;
+    if (this.possibleSolutions.size === 1) {
+      guessScorePercent = this.possibleSolutions.has(guess) ? 100 : 0;
+    } else if (this.possibleSolutions.size === 2) {
+      guessScorePercent = this.possibleSolutions.has(guess)
+        ? 100
+        : this.getWordScore(guess) > 0
+        ? 50
+        : 0;
     } else if (bestGuesses.length) {
       guessScorePercent = +((this.getWordScore(guess) / bestGuesses[0].score) * 100).toFixed(1);
     }
@@ -57,6 +64,7 @@ export class Game extends Solver {
       guessScorePercent,
       lucky: false,
       solutionSetShrinkPcnt: 0,
+      missedWin: this.possibleSolutions.size === 1 && guessScorePercent === 0,
     };
   }
 

@@ -16,14 +16,17 @@
       <fa v-else :icon="achievementLevel.icon" />
     </div>
     <div class="feedback">
-      <span>{{ achievementLevel ? achievementLevel.text : "Enter a guess" }}</span>
+      <span class="fbTitle">{{ achievementLevel ? achievementLevel.text : "Enter a guess" }}</span>
+      <span v-if="achievementLevel?.description" class="fbDesc">{{
+        achievementLevel.description
+      }}</span>
     </div>
     <div class="score">
       <span class="scoreTitle">WORD<br />SCORE</span>
       <span class="scoreValue">{{ props.feedback?.guessScorePercent ?? 0 }}</span>
       <span class="pcnt">%</span>
     </div>
-    <div class="expandBtn">
+    <div class="expandBtn" style="display: none">
       <fa icon="angle-down" />
     </div>
   </div>
@@ -38,6 +41,7 @@ interface AchievementLevel {
   icon: string;
   color: string;
   threshold: number;
+  description?: string;
 }
 
 const props = defineProps({
@@ -56,17 +60,30 @@ const achievementLevel = computed<AchievementLevel | undefined>(() => {
   if (!props.feedback) {
     return undefined;
   }
+  const bestWordDesc = `The best word was "${props.feedback.bestGuesses[0].word.toUpperCase()}"`;
   if (props.feedback.lucky) {
     return {
       text: "Lucky Guess",
       icon: "clover",
       color: "var(--luckyClr)",
       threshold: 0,
+      description: bestWordDesc,
+    };
+  } else if (props.feedback.missedWin) {
+    return {
+      text: "Missed Win",
+      icon: "xmark",
+      color: "var(--redClr)",
+      threshold: 0,
+      description: "There is only one possible word",
     };
   }
   for (const al of achievementLevels) {
     if (props.feedback.guessScorePercent >= al.threshold) {
-      return al;
+      return {
+        ...al,
+        description: al.threshold === 100 ? "This was the top algorithm word" : bestWordDesc,
+      };
     }
   }
   return undefined;
@@ -88,11 +105,6 @@ const achievementLevel = computed<AchievementLevel | undefined>(() => {
 
 .feedbackBar.initial {
   color: var(--blackClr);
-}
-
-.feedback {
-  font-family: "Suez One", serif;
-  flex: 1;
 }
 
 .icon {
@@ -165,8 +177,18 @@ const achievementLevel = computed<AchievementLevel | undefined>(() => {
 
 .feedback {
   display: flex;
-  align-items: center;
+  justify-content: center;
   margin: 0 8px;
+  flex: 1;
+  flex-direction: column;
+}
+
+.feedback .fbTitle {
+  font-family: "Suez One", serif;
+}
+
+.feedback .fbDesc {
+  font-size: 12px;
 }
 
 .expandBtn {

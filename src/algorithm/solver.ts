@@ -316,8 +316,8 @@ export class Solver {
   public bestGuesses(top = 10): ScoredWord[] {
     if (this.possibleSolutions.size === 0) {
       return [];
-    } else if (this.possibleSolutions.size === 1) {
-      return [{ word: this.possibleSolutions.values().next().value, score: 1 }];
+    } else if (this.possibleSolutions.size <= 2) {
+      return [...this.possibleSolutions].map((x) => ({ word: x, score: 1 }));
     }
 
     const bannedLetters = new Set<string>();

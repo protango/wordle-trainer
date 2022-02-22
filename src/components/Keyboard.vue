@@ -114,20 +114,19 @@ function isColorDisabled(color?: LetterStatus) {
 }
 
 function changeColor(color?: LetterStatus) {
-  if (isColorDisabled(color)) {
-    AlertManager.show("Clear guess first");
-    return;
-  } else if (props.inputLetterStatus === color) {
+  if (props.inputLetterStatus === color) {
     return;
   }
   emit("update:inputLetterStatus", color);
   if (color === undefined) {
     internalKeyStatus.value = props.keyStatus ?? {};
+    solveMode.value = false;
   } else {
     internalKeyStatus.value = keys.flat().reduce((acc, key) => {
       acc[key] = color;
       return acc;
     }, {} as Record<string, LetterStatus>);
+    solveMode.value = true;
   }
 }
 </script>

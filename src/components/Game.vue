@@ -32,7 +32,7 @@
         v-model:inputLetterStatus="kbInputStatus"
         :key-status="kbStatus"
         :guess-in-progress="!!cursorPosition[1]"
-        :solved="isSolved"
+        :solved="isSolved || cursorPosition[0] >= numOfGuesses"
       ></Keyboard>
     </div>
     <AlertManager></AlertManager>
@@ -49,7 +49,7 @@
 import { Feedback, Game } from "@/algorithm/game";
 import { LetterResult, ScoredWord } from "@/algorithm/solver";
 import { LetterStatus } from "@/algorithm/letterStatus";
-import { onMounted, onUnmounted, Ref, ref } from "vue";
+import { onMounted, onUnmounted, Ref, ref, watch } from "vue";
 import Keyboard from "./Keyboard.vue";
 import FeedbackBar from "./FeedbackBar.vue";
 import { sleep } from "@/algorithm/utilities";
@@ -113,7 +113,7 @@ function handleKeyPress(key: string, status = kbInputStatus.value) {
     topWords.value = game.bestGuesses(5);
     possibleSolutions.value = Array.from(game.possibleSolutions);
     showHints.value = true;
-  } else if (game.solved) {
+  } else if (game.solved || cursorPosition[0] >= numOfGuesses) {
     return;
   } else if (key === "enter") {
     submitGuess();
@@ -146,18 +146,22 @@ async function submitGuess() {
     return;
   }
   const word = letterStates.value[cursorPosition[0]].map((x) => x.letter).join("");
-  const inputResult = letterStates.value[cursorPosition[0]].map((x) => x.status);
+  const rawInputResult = letterStates.value[cursorPosition[0]].map((x) => x.status);
+  const inputResult = rawInputResult.every((x): x is LetterStatus => x !== undefined)
+    ? rawInputResult
+    : undefined;
   if (!game.isValid(word)) {
-    Alert.show("Not in word list");
-    doShakeRow();
-    return;
+    if (!inputResult) {
+      Alert.show("Not in word list");
+      doShakeRow();
+      return;
+    } else {
+      Alert.show("Not a word but I'll take it anyway");
+    }
   }
   const newFeedback = game.feedback(word);
   const ogPossibleSolutionCount = game.possibleSolutions.size;
-  const result = game.guess(
-    word,
-    inputResult.every((x): x is LetterStatus => x !== undefined) ? inputResult : undefined
-  );
+  const result = game.guess(word, inputResult);
   if (game.possibleSolutions.size === 0) {
     Alert.show(game.solved ? "Not a possible solution" : "No possible solutions");
     game.undoLastGuess();
@@ -247,9 +251,22 @@ function reset() {
   topWords.value = [];
 }
 
+function clearRow(row: number) {
+  letterStates.value[row].forEach((x) => {
+    x.letter = undefined;
+    x.status = undefined;
+    x.isStatusInput = false;
+    x.flip = false;
+  });
+}
+
 function undo() {
-  Alert.show("Undo");
   if (cursorPosition[0] === 0) {
+    return;
+  }
+  if (cursorPosition[1] > 0) {
+    clearRow(cursorPosition[0]);
+    cursorPosition[1] = 0;
     return;
   }
   isSolved.value = false;
@@ -258,26 +275,35 @@ function undo() {
   game.undoLastGuess();
   kbStatus.value = game.letterStates;
   feedback.value = undefined;
-  letterStates.value[cursorPosition[0]].forEach((x) => {
-    x.letter = undefined;
-    x.status = undefined;
-    x.isStatusInput = false;
-    x.flip = false;
-  });
+  clearRow(cursorPosition[0]);
 }
 
 function acceptWord(word: string) {
-  Alert.show(`Accepted ${word}`);
-  if (game.solved || cursorPosition[0] >= numOfGuesses) {
+  Alert.show(`Accepted "${word.toUpperCase()}"`);
+  if (game.solved || cursorPosition[0] >= numOfGuesses || isRevealing) {
     return;
   }
-  letterStates.value[cursorPosition[0]].forEach((x) => {
-    x.letter = undefined;
-    x.status = undefined;
-    x.isStatusInput = false;
-    x.flip = false;
+  clearRow(cursorPosition[0]);
+  letterStates.value[cursorPosition[0]].forEach((x, i) => {
+    sleep(i * 100).then(() => {
+      x.letter = word[i];
+    });
   });
+  cursorPosition[1] = Math.min(word.length, numOfLetters);
 }
+
+watch(
+  () => kbInputStatus.value,
+  (newVal, oldVal) => {
+    if (
+      (newVal === undefined && oldVal !== undefined) ||
+      (newVal !== undefined && oldVal === undefined)
+    ) {
+      clearRow(cursorPosition[0]);
+      cursorPosition[1] = 0;
+    }
+  }
+);
 </script>
 
 <style scoped>
