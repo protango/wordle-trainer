@@ -12,7 +12,7 @@
   <main class="main">
     <Game></Game>
   </main>
-  <footer>
+  <footer class="mainFooter">
     <span
       >Built with <i class="heart">❤</i> by
       <a href="https://github.com/protango">protango</a>. </span
@@ -62,7 +62,7 @@ const showHeaderControls = ref(false);
   padding: 0 4px;
 }
 
-footer {
+footer.mainFooter {
   font-size: 14px;
   color: #777;
   text-align: center;

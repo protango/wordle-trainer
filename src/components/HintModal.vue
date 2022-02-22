@@ -6,6 +6,7 @@
         <button class="closeBtn" @click="$emit('update:show', false)"><fa icon="xmark" /></button>
       </header>
       <main>
+        <p class="instructions">Tap a word to add it to the game board.</p>
         <h2>Top algorithm words:</h2>
         <div class="topWords">
           <div
@@ -25,22 +26,24 @@
           </div>
         </div>
         <h2>Possible Solutions:</h2>
-        <span
-          v-for="word in possibleSolutions.slice(0, 5)"
-          :key="word"
-          class="wordPill"
-          @click="
-            $emit('update:show', false);
-            $emit('acceptWord', word);
-          "
-          >{{ word }}</span
-        >
-        <div v-if="possibleSolutions && possibleSolutions.length > 5" class="noHint">
-          <span>+{{ possibleSolutions.length - 5 }} More</span>
-        </div>
-        <div>
-          <div v-if="!possibleSolutions || !possibleSolutions.length" class="noHint">
-            <span>No suggestions available</span>
+        <div class="possibleSolns">
+          <span
+            v-for="word in possibleSolutions.slice(0, 10)"
+            :key="word"
+            class="wordPill"
+            @click="
+              $emit('update:show', false);
+              $emit('acceptWord', word);
+            "
+            >{{ word }}</span
+          >
+          <div v-if="possibleSolutions && possibleSolutions.length > 10" class="plusMore">
+            <span>+{{ possibleSolutions.length - 10 }} More</span>
+          </div>
+          <div>
+            <div v-if="!possibleSolutions || !possibleSolutions.length" class="noHint">
+              <span>No suggestions available</span>
+            </div>
           </div>
         </div>
       </main>
@@ -147,6 +150,7 @@ header > h1 > svg {
   border: 0;
   background: var(--keyClr);
   border-radius: 50%;
+  color: var(--blackClr);
   width: 25px;
   text-align: center;
   line-height: 25px;
@@ -158,8 +162,8 @@ main {
 }
 
 main h2 {
-  font-size: 15px;
-  font-weight: normal;
+  font-size: 16px;
+  font-weight: bold;
   margin: 5px 0;
 }
 
@@ -184,6 +188,7 @@ main p {
   border-radius: 0 5px 5px 0;
   text-align: center;
   min-width: 35px;
+  vertical-align: top;
 }
 .extWordPill .wordPill {
   border-radius: 5px 0 0 5px;
@@ -200,6 +205,7 @@ main p {
   display: inline-block;
   margin: 0 4px 4px 0;
   cursor: pointer;
+  vertical-align: top;
 }
 
 .noHint {
@@ -224,5 +230,18 @@ main p {
 .fadeOut {
   animation: fadeout 400ms;
   animation-fill-mode: forwards;
+}
+
+.plusMore {
+  display: inline-block;
+  color: var(--absentClr);
+  font-size: 12px;
+  text-align: center;
+  margin: 0px 2px;
+}
+
+.instructions {
+  margin: 20px 0 20px 0;
+  font-size: 14px;
 }
 </style>
