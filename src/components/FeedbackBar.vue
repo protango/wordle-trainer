@@ -101,6 +101,7 @@ const achievementLevel = computed<AchievementLevel | undefined>(() => {
   margin-bottom: 7px;
   position: relative;
   color: var(--whiteClr);
+  transition: background-color 500ms linear;
 }
 
 .feedbackBar.initial {
