@@ -294,6 +294,25 @@ export class Solver {
       }
     });
 
+    // Infer position solutions from remaining solutions
+    for (let posIdx = 0; posIdx < this.positions.length; posIdx++) {
+      const pos = this.positions[posIdx];
+      if (pos.answer) {
+        continue;
+      }
+      let letterInPos: string | undefined;
+      for (const word of this.possibleSolutions) {
+        if (letterInPos && word[posIdx] !== letterInPos) {
+          letterInPos = undefined;
+          break;
+        }
+        letterInPos = word[posIdx];
+      }
+      if (letterInPos) {
+        pos.answer = letterInPos;
+      }
+    }
+
     // Update letter scoring histogram
     this.possibleSolutionScoringHist = this.getScoreHistogram();
   }
@@ -399,23 +418,23 @@ export class Solver {
 
   private getScoreHistogram(): ScoringHist {
     const hist = { wordsWithLetterCount: {}, wordsWithLetterInPos: {} } as ScoringHist;
-    const seenLetterPositions = new Set<string>();
     // Populate wordsWithLetterCount
     for (const word of this.possibleSolutions) {
       const letterCounts = groupBy(
         Array.from(word),
         (x) => x,
-        (acc, letter, i) => (letter !== this.positions[i].answer ? acc + 1 : acc),
+        (acc, letter, i) => {
+          if (letter === this.positions[i].answer) {
+            return acc;
+          }
+          return acc + 1;
+        },
         0
       );
 
       for (const letter in letterCounts) {
         const count = letterCounts[letter];
         for (let i = 1; i <= count; i++) {
-          const letterPositionKey = `${letter}${i}`;
-          if (seenLetterPositions.has(letterPositionKey)) {
-            continue; // Only award points for each letter in each position once
-          }
           hist.wordsWithLetterCount[letter] = hist.wordsWithLetterCount[letter] ?? {};
           hist.wordsWithLetterCount[letter][i] = (hist.wordsWithLetterCount[letter][i] ?? 0) + 1;
         }

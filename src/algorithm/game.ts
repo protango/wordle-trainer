@@ -21,6 +21,10 @@ export class Game extends Solver {
 
     this.solution = solution;
     console.log(solution);
+
+    (window as any).setSolution = (solution: string) => {
+      this.solution = solution;
+    };
   }
 
   public guess(guess: string, result?: LetterStatus[]): LetterResult[] {
