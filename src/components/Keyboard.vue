@@ -278,18 +278,14 @@ watch(
   margin: 0 2px;
   color: var(--blackClr);
   height: 28px;
-  vertical-align: top;
+  display: inline-flex;
+  align-items: center;
 }
 
 .suppCtrl span {
   font-size: 12px;
   font-weight: 600;
   margin-left: 5px;
-  vertical-align: middle;
-}
-
-.suppCtrl svg {
-  vertical-align: middle;
 }
 
 .suppCtrl:disabled {
