@@ -60,7 +60,6 @@
 <script lang="ts" setup>
 import { LetterStatus } from "@/algorithm/letterStatus";
 import { PropType, ref, watch } from "vue";
-import { AlertManager } from "./AlertManager";
 import ToggleSwitch from "./ToggleSwitch.vue";
 
 const keys: string[][] = "qwertyuiop\nasdfghjkl\nzxcvbnm".split("\n").map((row) => [...row]);
