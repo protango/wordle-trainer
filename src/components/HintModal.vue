@@ -19,6 +19,10 @@
         <span>No suggestions available</span>
       </div>
     </div>
+    <p class="algoDisclaimer">
+      The algorithm may pick words that are not possible solutions, this happens when it needs to
+      reveal more letters before attempting a solution.
+    </p>
     <h2>Possible Solutions:</h2>
     <div class="possibleSolns">
       <span
@@ -125,7 +129,7 @@ p {
 }
 
 .topWords {
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .plusMore {
@@ -139,5 +143,10 @@ p {
 .instructions {
   margin: 20px 0 20px 0;
   font-size: 14px;
+}
+
+.algoDisclaimer {
+  margin: 10px 0 20px 0;
+  font-size: 12px;
 }
 </style>
