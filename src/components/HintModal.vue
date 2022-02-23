@@ -163,6 +163,7 @@ p {
 
 .algoDisclaimer a {
   text-decoration: underline;
+  cursor: pointer;
 }
 
 .algoDisclaimer {
