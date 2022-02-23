@@ -182,6 +182,8 @@ const achievementLevel = computed<AchievementLevel | undefined>(() => {
   margin: 0 8px;
   flex: 1;
   flex-direction: column;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .feedback .fbTitle {

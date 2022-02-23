@@ -16,6 +16,8 @@ import {
   faClover,
   faLightbulb,
   faXmark,
+  faDoorOpen,
+  faMagicWandSparkles,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
@@ -36,7 +38,9 @@ library.add(
   faArrowsRotate,
   faClover,
   faLightbulb,
-  faXmark
+  faXmark,
+  faDoorOpen,
+  faMagicWandSparkles
 );
 
 createApp(App).component("fa", FontAwesomeIcon).mount("#app");
