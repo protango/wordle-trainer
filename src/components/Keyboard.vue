@@ -22,10 +22,10 @@
         ></button>
       </div>
       <div>
-        <button class="suppCtrl" @click="$emit('keyPress', 'undo')" v-if="!solved">
-          <fa icon="undo" /><span v-if="!solveMode">UNDO</span>
+        <button class="suppCtrl" @click="$emit('keyPress', 'undo')">
+          <fa icon="undo" /><span v-if="!solveMode && !solved">UNDO</span>
         </button>
-        <button class="suppCtrl" @click="$emit('keyPress', 'restart')" v-else>
+        <button class="suppCtrl" @click="$emit('keyPress', 'restart')" v-if="solved">
           <fa icon="arrows-rotate" /><span>RESTART</span>
         </button>
         <button class="suppCtrl" @click="$emit('keyPress', 'hint')" v-if="!solved">

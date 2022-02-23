@@ -20,8 +20,13 @@
       </div>
     </div>
     <p class="algoDisclaimer">
-      The algorithm may pick words that are not possible solutions, this happens when it needs to
-      reveal more letters before attempting a solution.
+      <a v-if="!showAlgoDisclaimer" @click="showAlgoDisclaimer = true"
+        >Why was an impossible word suggested?</a
+      >
+      <span v-if="showAlgoDisclaimer">
+        The algorithm may pick words that are not possible solutions, this happens when it needs to
+        reveal more letters before attempting a solution.
+      </span>
     </p>
     <h2>Possible Solutions:</h2>
     <div class="possibleSolns">
@@ -72,6 +77,17 @@ defineEmits<{
   (event: "update:show", show: boolean): void;
   (event: "acceptWord", word: string): void;
 }>();
+
+const showAlgoDisclaimer = ref(false);
+
+watch(
+  () => props.show,
+  (newVal) => {
+    if (newVal) {
+      showAlgoDisclaimer.value = false;
+    }
+  }
+);
 </script>
 
 <style scoped>
@@ -143,6 +159,10 @@ p {
 .instructions {
   margin: 20px 0 20px 0;
   font-size: 14px;
+}
+
+.algoDisclaimer a {
+  text-decoration: underline;
 }
 
 .algoDisclaimer {
