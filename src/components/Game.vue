@@ -92,6 +92,10 @@ const isSolved = ref(false);
 
 onMounted(() => {
   document.addEventListener("keydown", handleNativeKeyDown);
+  (window as any).setSolution = (solution: string) => {
+    reset();
+    game.solution = solution;
+  };
 });
 
 onUnmounted(() => {
@@ -177,9 +181,11 @@ async function submitGuess() {
   ) {
     newFeedback.lucky = true;
   }
+  /*
   console.log(
     `${ogPossibleSolutionCount} -> ${game.possibleSolutions.size} (${newFeedback.solutionSetShrinkPcnt}%)`
   );
+  */
 
   await loadGuessResult(result);
   feedback.value = newFeedback;

@@ -21,11 +21,6 @@ export class Game extends Solver {
     super(solution.length);
 
     this.solution = solution;
-    console.log(solution);
-
-    (window as any).setSolution = (solution: string) => {
-      this.solution = solution;
-    };
   }
 
   public guess(guess: string, result?: LetterStatus[]): LetterResult[] {
@@ -43,7 +38,6 @@ export class Game extends Solver {
     if (result && !this.possibleSolutions.has(this.solution) && this.possibleSolutions.size) {
       // Pick another solution if the current one is no longer possible
       this.solution = randomItemFromSet(this.possibleSolutions);
-      console.log(this.solution);
     }
     return gr.result;
   }
@@ -82,6 +76,5 @@ export class Game extends Solver {
   public reset(): void {
     super.reset();
     this.solution = randomItemFromSet(this.possibleSolutions);
-    console.log(this.solution);
   }
 }
