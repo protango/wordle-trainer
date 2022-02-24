@@ -1,6 +1,7 @@
 import { LetterStatus } from "./letterStatus";
 import { MultiScore } from "./multiScore";
-import { GuessResult, LetterResult, ScoredWord, Solver } from "./solver";
+import { LetterResult, ScoredWord, Solver } from "./solver";
+import { GuessResult } from "./guessResult";
 import { randomItemFromSet } from "./utilities";
 
 export interface Feedback {
