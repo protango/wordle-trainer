@@ -17,6 +17,8 @@ export class GuessResult {
     }, {} as Record<string, number>);
   }
 
+  private correctLetters: Set<string> = new Set();
+
   public pretty(): string {
     return (
       this.result
@@ -53,9 +55,10 @@ export class GuessResult {
     }
     this.correctCount = 0;
     this.wrongPositionCount = 0;
-    for (const { status } of this.result) {
+    for (const { letter, status } of this.result) {
       if (status === LetterStatus.Correct) {
         this.correctCount += 1;
+        this.correctLetters.add(letter);
       } else if (status === LetterStatus.Present) {
         this.wrongPositionCount += 1;
       }
@@ -94,5 +97,45 @@ export class GuessResult {
     }
 
     return result as LetterResult[];
+  }
+
+  public generateRegex(flags?: string): RegExp {
+    const mustContains: Record<string, { count: number; exactly: boolean }> = {};
+    const mustNotContain = new Set<string>();
+    let posRx = "";
+    for (const { letter, status } of this.result) {
+      switch (status) {
+        case LetterStatus.Correct:
+          posRx += letter;
+          break;
+        case LetterStatus.Present:
+          posRx += `[^${letter}]`;
+          if (mustContains[letter] === undefined) {
+            mustContains[letter] = { count: 1, exactly: false };
+          } else {
+            mustContains[letter].count += 1;
+          }
+          break;
+        case LetterStatus.Absent:
+          posRx += ".";
+          if (mustContains[letter] !== undefined) {
+            mustContains[letter].exactly = true;
+          } else if (!this.correctLetters.has(letter)) {
+            mustNotContain.add(letter);
+          }
+          break;
+      }
+    }
+    let mustContainRx = "";
+    for (const [letter, mc] of Object.entries(mustContains)) {
+      mustContainRx += `(?=${(".*" + letter).repeat(mc.count)}${
+        mc.exactly ? `[^${letter}]*$` : ""
+      })`;
+    }
+    if (mustNotContain.size) {
+      mustContainRx += `(?=[^${[...mustNotContain].join("")}]{${this.guess.length}})`;
+    }
+
+    return new RegExp("^" + mustContainRx + posRx + "$", flags);
   }
 }
