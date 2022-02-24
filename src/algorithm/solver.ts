@@ -233,7 +233,7 @@ export class Solver {
         bannedLetters.push(letter);
       } else {
         const { count, specificity } = countInfo;
-        result += `(?=${(".*" + letter).repeat(count)}${
+        result += `(?=${(`[^${letter}]*` + letter).repeat(count)}${
           specificity === CountSpecificity.Exactly ? `[^${letter}]*$` : ""
         })`;
       }
@@ -364,38 +364,44 @@ export class Solver {
   protected getWordScore(word: string): MultiScore {
     const letterCounts = {} as Record<string, number>;
     const letterPositions = {} as Record<string, number>;
+    const trickyAdjustmentLetters = {} as Record<string, number[]>;
     for (let i = 0; i < word.length; i++) {
       const letter = word[i];
       const mustContain = this.answerMustContain.get(letter);
       const positionInfo = this.positions[i];
 
-      if (positionInfo.answer === letter) {
-        continue; // Award no points if this position is already solved
+      if (mustContain) {
+        if (mustContain.count === 0 && mustContain.specificity === CountSpecificity.Exactly) {
+          continue; // Award no points if this letter is already known to be absent from the answer
+        }
+        if (mustContain.count === mustContain.solved) {
+          if (mustContain.specificity === CountSpecificity.Exactly) {
+            continue; // Award no points if we already have all the answers we need for this letter
+          } else if (mustContain.specificity === CountSpecificity.GreaterThan) {
+            // Tricky scenario here, we have enough answers for this letter, but there could be more.
+            // We'll add it to a list of tricky letters and apply a score adjustment after initial calculation.
+            if (trickyAdjustmentLetters[letter]) {
+              trickyAdjustmentLetters[letter].push(i);
+            } else {
+              trickyAdjustmentLetters[letter] = [i];
+            }
+            continue;
+          }
+        }
       }
 
-      if (
-        mustContain &&
-        mustContain.count === 0 &&
-        mustContain.specificity === CountSpecificity.Exactly
-      ) {
-        continue; // Award no points if this letter is already known to be absent from the answer
+      if (positionInfo.answer === letter) {
+        continue; // Award no points if this position is already solved
       }
 
       if (positionInfo.cantBe.includes(letter)) {
         continue; // Award no points if this letter is already known to not be in this position
       }
 
-      if (
-        mustContain &&
-        mustContain.count === mustContain.solved &&
-        mustContain.specificity === CountSpecificity.Exactly
-      ) {
-        continue; // Award no points if we already have all the answers we need for this letter
-      }
       letterCounts[letter] = (letterCounts[letter] ?? 0) + 1;
       letterPositions[letter] = i;
     }
-    const majorScore = Object.entries(letterCounts).reduce((a, [letter, count]) => {
+    let majorScore = Object.entries(letterCounts).reduce((a, [letter, count]) => {
       let letterCountScore = 0;
       for (let i = count; i >= 1; i--) {
         const maybeScore = this.possibleSolutionScoringHist.wordsWithLetterCount[letter]?.[i];
@@ -408,12 +414,46 @@ export class Solver {
       return a + letterCountScore;
     }, 0);
 
+    // Apply tricky letter adjustment
+    for (const [letter, indicies] of Object.entries(trickyAdjustmentLetters)) {
+      const mc = this.answerMustContain.get(letter);
+      if (!mc) {
+        throw new Error("Tricky letter adjustment for letter not in must contain list");
+      }
+      // Here, we already know that the mustContain is "greater-than"
+      if (mc.count === indicies.length) {
+        // So this guess is only testing positions
+        for (const i of indicies) {
+          // Scoring hist does not award points for solved positions, so we don't need to check again here
+          const maybeScore = this.possibleSolutionScoringHist.wordsWithLetterInPos[letter]?.[i];
+          if (maybeScore !== undefined) {
+            majorScore += maybeScore;
+          }
+        }
+      } else if (indicies.length > mc.count) {
+        // This guess checks for double/triple/2-n letters etc
+        let letterCountScore = 0;
+        // Then award points as normal
+        for (let i = indicies.length; i >= 1; i--) {
+          const maybeScore = this.possibleSolutionScoringHist.wordsWithLetterCount[letter]?.[i];
+          if (maybeScore !== undefined) {
+            letterCountScore = maybeScore;
+            break;
+          }
+        }
+
+        majorScore += letterCountScore;
+      }
+    }
+
+    // Minor score is based on hitting correct positions
     const minorScore = Object.entries(letterPositions).reduce((a, [letter, pos]) => {
       const letterPosScore =
         this.possibleSolutionScoringHist.wordsWithLetterInPos[letter]?.[pos] ?? 0;
       return a + letterPosScore;
     }, 0);
 
+    // Tie breaker is designed to favour possible solutions when all other things are equal
     const tieBreaker = this.possibleSolutions.has(word) ? 2 : Solver.answerWords.has(word) ? 1 : 0;
 
     return new MultiScore(majorScore, minorScore, tieBreaker);
