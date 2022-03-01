@@ -178,8 +178,9 @@ export class Solver {
 
       // Handle incorrect guesses
       if (guess.result[i].status === LetterStatus.Absent) {
-        if (correctLetterCounts[letter]) {
-          this.answerMustContain.get(letter)!.specificity = CountSpecificity.Exactly;
+        const mustContain = this.answerMustContain.get(letter);
+        if (correctLetterCounts[letter] && mustContain) {
+          mustContain.specificity = CountSpecificity.Exactly;
         } else {
           this.answerMustContain.set(letter, {
             count: 0,
