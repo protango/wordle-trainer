@@ -41,11 +41,15 @@
       </div>
     </div>
     <div class="welcomeFooter">
-      <span
-        >Built with <i class="heart">❤</i> by
-        <a href="https://github.com/protango">protango</a>. </span
-      ><br />
-      <span>Not affiliated with, or endored by the New York Times. </span>
+      <span>
+        Built with <i class="heart">❤</i> by <a href="https://github.com/protango">protango</a>.
+      </span>
+      <div class="licenceContainer">
+        <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+          <img alt="Creative Commons License" style="border-width: 0" src="by-nc-sa.png" />
+        </a>
+        <a class="showLicence" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Licence.</a>
+      </div>
     </div>
   </Modal>
 </template>
@@ -323,6 +327,21 @@ p {
 
 .welcomeModal .suppCtrl svg {
   vertical-align: middle;
+}
+
+.licenceContainer {
+  margin-top: 2px;
+}
+
+.licenceContainer a {
+  vertical-align: top;
+  line-height: 15px;
+}
+
+.licenceContainer .showLicence {
+  text-decoration: underline;
+  margin-left: 5px;
+  cursor: pointer;
 }
 
 @keyframes fadein {
