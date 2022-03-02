@@ -3,7 +3,7 @@
     <div class="header-buffer">
       <fa @click="showWelcomeModal = true" icon="circle-question" class="headerBtn" />
     </div>
-    <h1 class="logo">Wordle Coach</h1>
+    <h1 class="logo">Wordle Trainer</h1>
     <div class="header-buffer">
       <fa v-if="showHeaderControls" icon="square-poll-vertical" class="headerBtn" />
       <fa v-if="showHeaderControls" icon="gear" class="headerBtn" />
@@ -15,7 +15,7 @@
   <Modal v-model:show="showWelcomeModal" title="Welcome" icon="door-open" class="welcomeModal">
     <div>
       <span>
-        <strong>WORDLE COACH</strong> rates the quality of each guess, and lets you know its top
+        <strong>WORDLE TRAINER</strong> rates the quality of each guess, and lets you know its top
         pick:</span
       >
       <FeedbackBar style="margin-top: 5px" :feedback="exampleFeedback"></FeedbackBar>
@@ -60,10 +60,10 @@ import { MultiScore } from "./algorithm/multiScore";
 import ToggleSwitch from "./components/ToggleSwitch.vue";
 
 const showHeaderControls = ref(false);
-const showWelcomeModal = ref(localStorage.getItem("wordleCoachVisited") === null);
+const showWelcomeModal = ref(localStorage.getItem("wordleTrainerVisited") === null);
 const fakeToggle = ref(true);
 
-localStorage.setItem("wordleCoachVisited", "true");
+localStorage.setItem("wordleTrainerVisited", "true");
 
 const exampleFeedback: Ref<Feedback> = ref({
   bestGuesses: [
@@ -150,7 +150,7 @@ watch(
 
 .logo {
   font-family: "Suez One", serif;
-  font-size: 28px;
+  font-size: 24px;
   margin: 0;
   text-align: center;
   padding: 0 8px;
