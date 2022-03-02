@@ -94,7 +94,13 @@ export class Solver {
     this.positions = undoData.positions;
     this.updateLetterStates();
     this.possibleSolutionScoringHist = this.getScoreHistogram();
-    this.solved = this.positions.every((x) => !!x.answer);
+    if (this.guesses.length) {
+      this.solved = this.guesses[this.guesses.length - 1].result.every(
+        (x) => x.status === LetterStatus.Correct
+      );
+    } else {
+      this.solved = false;
+    }
   }
 
   public reset(): void {
