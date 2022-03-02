@@ -305,7 +305,8 @@ watch(
     if (
       ((newVal === undefined && oldVal !== undefined) ||
         (newVal !== undefined && oldVal === undefined)) &&
-      letterStates.value[cursorPosition[0]].some((x) => x.letter && x.isStatusInput)
+      !isRevealing &&
+      letterStates.value[cursorPosition[0]].some((x) => x.letter)
     ) {
       clearRow(cursorPosition[0]);
       cursorPosition[1] = 0;
